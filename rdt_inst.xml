@@ -1,0 +1,74 @@
+<domain type="kvm">
+  <uuid>93a35a15-d900-423c-a0aa-f8097da0228c</uuid>
+  <name>rdt-vm-manual</name>
+  <memory>262144</memory>
+  <numatune>
+    <memory mode="strict" nodeset="0-1"/>
+    <memnode cellid="0" mode="strict" nodeset="0"/>
+    <memnode cellid="1" mode="strict" nodeset="1"/>
+  </numatune>
+
+  <vcpu>10</vcpu>
+  <cpu match="exact" mode="host-passthrough">
+    <cache mode="passthrough"/>
+    <topology sockets="2" cores="5" threads="1"/>
+    <numa>
+      <cell id="0" cpus="0-3" memory="131072"/>
+      <cell id="1" cpus="4-9" memory="131072"/>
+    </numa>
+  </cpu>
+  <cputune>
+    <vcpupin vcpu="0" cpuset="14"/>
+    <vcpupin vcpu="1" cpuset="15"/>
+    <vcpupin vcpu="2" cpuset="16"/>
+    <vcpupin vcpu="3" cpuset="17"/>
+    <!--
+    <vcpupin vcpu="4" cpuset="30"/>
+    <vcpupin vcpu="5" cpuset="31"/>
+    <vcpupin vcpu="6" cpuset="32"/>
+    <vcpupin vcpu="7" cpuset="33"/>
+    <vcpupin vcpu="8" cpuset="34"/>
+    <vcpupin vcpu="9" cpuset="35"/>
+    -->
+    <cachetune vcpus="0-3">
+      <cache id="0" level="3" type="both" size="4608" unit="KiB"/>
+    </cachetune>
+    <cachetune vcpus="4-9">
+      <cache id="1" level="3" type="both" size="9216" unit="KiB"/>
+    </cachetune>
+  </cputune>
+
+  <sysinfo type="smbios">
+    <system>
+      <entry name="manufacturer">Wonderful Manufacturer</entry>
+      <entry name="product">Wonderful Virtual Machine </entry>
+      <entry name="version">1.0.0</entry>
+      <entry name="serial">93a35a15-d900-423c-a0aa-f8097da0228c</entry>
+      <entry name="uuid">93a35a15-d900-423c-a0aa-f8097da0228c</entry>
+      <entry name="family">Virtual Machine</entry>
+    </system>
+  </sysinfo>
+  <os>
+    <type machine="pc">hvm</type>
+    <boot dev="hd"/>
+    <smbios mode="sysinfo"/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <devices>
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2" cache="none"/>
+      <source file="/opt/stack/KVM_Images/rdt.disk"/>
+      <target dev="vda" bus="virtio"/>
+    </disk>
+    <graphics type="vnc" autoport="yes" listen="0.0.0.0"/>
+    <video>
+      <model type="cirrus"/>
+    </video>
+    <memballoon model="virtio">
+      <stats period="10"/>
+    </memballoon>
+  </devices>
+</domain>
