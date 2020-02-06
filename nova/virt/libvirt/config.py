@@ -2337,6 +2337,48 @@ class LibvirtConfigGuestCPUTuneVCPUSched(LibvirtConfigObject):
 
         return root
 
+# TODO(Tony): CPUTuneCacheTune: Add RDT support
+class LibvirtConfigGuestCPUTuneCacheTune(LibvirtConfigObject):
+
+    def __init__(self, **kwargs):
+        super(LibvirtConfigGuestCPUTuneCacheTune, self).__init__(
+            root_name="cachetune",
+            **kwargs)
+
+        self.vcpus = None
+        self.cache = None
+
+    def format_dom(self):
+        root = super(LibvirtConfigGuestCPUTuneCacheTune, self).format_dom()
+
+        root.set("vcpus", str(self.vcpus))
+        root.append(self.cache.format_dom())
+        return root
+
+class LibvirtConfigGuestCPUTuneCacheTuneCache(LibvirtConfigObject):
+
+    def __init__(self, **kwargs):
+        super(LibvirtConfigGuestCPUTuneCacheTuneCache, self).__init__(
+            root_name="cache",
+            **kwargs)
+
+        # TODO(Tony): must fix this default value
+        self.id = 0
+        self.level = 3
+        self.type = "both"
+        self.size = 4608
+        self.unit="KiB"
+
+    def format_dom(self):
+        root = super(LibvirtConfigGuestCPUTuneCacheTuneCache, self).format_dom()
+
+        root.set("id", str(self.id))
+        root.set("level", str(self.level))
+        root.set("type", str(self.type))
+        root.set("size", str(self.size))
+        root.set("unit", str(self.unit))
+
+        return root
 
 class LibvirtConfigGuestCPUTune(LibvirtConfigObject):
 
@@ -2349,6 +2391,9 @@ class LibvirtConfigGuestCPUTune(LibvirtConfigObject):
         self.vcpupin = []
         self.emulatorpin = None
         self.vcpusched = []
+        
+        # TODO(Tony): Add RDT support
+        self.cachetune = []
 
     def format_dom(self):
         root = super(LibvirtConfigGuestCPUTune, self).format_dom()
@@ -2366,6 +2411,11 @@ class LibvirtConfigGuestCPUTune(LibvirtConfigObject):
             root.append(vcpu.format_dom())
         for sched in self.vcpusched:
             root.append(sched.format_dom())
+
+        # TODO(Tony): Add RDT support
+        # ct is short for cachetune
+        for ct in self.cachetune:
+            root.append(ct.format_dom())
 
         return root
 

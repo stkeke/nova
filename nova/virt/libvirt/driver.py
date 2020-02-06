@@ -3564,6 +3564,7 @@ class LibvirtDriver(driver.ComputeDriver):
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, allocations, network_info=None,
               block_device_info=None, power_on=True, accel_info=None):
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.driver.py::LibvirtDriver{}::spawn()")
         disk_info = blockinfo.get_disk_info(CONF.libvirt.virt_type,
                                             instance,
                                             image_meta,
@@ -3584,17 +3585,23 @@ class LibvirtDriver(driver.ComputeDriver):
         # Does the guest need to be assigned some vGPU mediated devices ?
         mdevs = self._allocate_mdevs(allocations)
 
+        LOG.debug("Tony >>> Start calling self._get_guest_xml()")
         xml = self._get_guest_xml(context, instance, network_info,
                                   disk_info, image_meta,
                                   block_device_info=block_device_info,
                                   mdevs=mdevs, accel_info=accel_info)
+        LOG.debug("Tony <<< End calling self._get_guest_xml()")
+
+        LOG.debug("Tony >>> Start calling self._create_domain_and_network()")
         self._create_domain_and_network(
             context, xml, instance, network_info,
             block_device_info=block_device_info,
             post_xml_callback=gen_confdrive,
             destroy_disks_on_failure=True,
             power_on=power_on)
+        LOG.debug("Tony <<< End calling self._create_domain_and_network()")
         LOG.debug("Guest created on hypervisor", instance=instance)
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.driver.py::LibvirtDriver{}::spawn()")
 
         def _wait_for_boot():
             """Called at an interval until the VM is running."""
@@ -4462,6 +4469,7 @@ class LibvirtDriver(driver.ComputeDriver):
 
     def _get_guest_cpu_config(self, flavor, image_meta,
                               guest_cpu_numa_config, instance_numa_topology):
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_cpu_config()")
         cpu = self._get_guest_cpu_model_config(flavor)
 
         if cpu is None:
@@ -4475,6 +4483,7 @@ class LibvirtDriver(driver.ComputeDriver):
         cpu.threads = topology.threads
         cpu.numa = guest_cpu_numa_config
 
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_cpu_config()")
         return cpu
 
     def _get_guest_disk_config(self, instance, name, disk_mapping, inst_type,
@@ -5021,7 +5030,7 @@ class LibvirtDriver(driver.ComputeDriver):
         guest_cpu_tune.emulatorpin = (
             vconfig.LibvirtConfigGuestCPUTuneEmulatorPin())
         guest_cpu_tune.emulatorpin.cpuset = set([])
-
+        
         # Init NUMATune configuration
         guest_numa_tune = vconfig.LibvirtConfigGuestNUMATune()
         guest_numa_tune.memory = vconfig.LibvirtConfigGuestNUMATuneMemory()
@@ -5057,11 +5066,35 @@ class LibvirtDriver(driver.ComputeDriver):
                 pin_cpuset = self._get_pin_cpuset(cpu, object_numa_cell,
                                                   host_cell)
                 guest_cpu_tune.vcpupin.append(pin_cpuset)
-
                 emu_pin_cpuset = self._get_emulatorpin_cpuset(
                     cpu, object_numa_cell, vcpus_rt,
                     emulator_threads_policy, wants_realtime, pin_cpuset)
                 guest_cpu_tune.emulatorpin.cpuset.update(emu_pin_cpuset)
+
+        # TODO(Tony): _get_guest_numa_config: Add RDT support
+        # TODO: Add cputune settings
+
+        # flavor is designed like this, but can be changed
+        # hw:numa_cpus.0="0-3"
+        # hw:numa_cache.0=2
+        # hw:numa_cpus.1="4-9"
+        # hw:numa_cache.1=4
+        # TODO(Tony): fix this hardcode; probably move it to a function
+        cacheway_size = 2304 # KB
+        
+        for i in ['0', '1']:
+            cache_key = 'hw:numa_cache.' + i
+            cpus_key = 'hw:numa_cpus.' + i
+            if cache_key in flavor.extra_specs.keys():
+                cacheways = int(flavor.extra_specs[cache_key])
+                cat_cache = vconfig.LibvirtConfigGuestCPUTuneCacheTuneCache()
+                cat_cache.id = i
+                cat_cache.size = cacheways * cacheway_size
+
+                cachetune = vconfig.LibvirtConfigGuestCPUTuneCacheTune()
+                cachetune.vcpus = flavor.extra_specs[cpus_key]
+                cachetune.cache = cat_cache
+                guest_cpu_tune.cachetune.append(cachetune)
 
         # TODO(berrange) When the guest has >1 NUMA node, it will
         # span multiple host NUMA nodes. By pinning emulator threads
@@ -5817,11 +5850,15 @@ class LibvirtDriver(driver.ComputeDriver):
         :param mdevs: optional list of mediated devices to assign to the guest.
         :param accel_info: optional list of accelerator requests (ARQs)
         """
+
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_config()")
         flavor = instance.flavor
         inst_path = libvirt_utils.get_instance_path(instance)
         disk_mapping = disk_info['mapping']
         vpmems = self._get_ordered_vpmems(instance, flavor)
 
+        # TODO(Tony): remote pdb
+        # import remote_pdb; remote_pdb.set_trace()
         virt_type = CONF.libvirt.virt_type
         guest = vconfig.LibvirtConfigGuest()
         guest.virt_type = virt_type
@@ -5957,7 +5994,7 @@ class LibvirtDriver(driver.ComputeDriver):
 
         if vpmems:
             self._guest_add_vpmems(guest, vpmems)
-
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_config()")
         return guest
 
     def _get_ordered_vpmems(self, instance, flavor):
@@ -6229,6 +6266,7 @@ class LibvirtDriver(driver.ComputeDriver):
         # NOTE(danms): Stringifying a NetworkInfo will take a lock. Do
         # this ahead of time so that we don't acquire it while also
         # holding the logging lock.
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_xml()")
         network_info_str = str(network_info)
         msg = ('Start _get_guest_xml '
                'network_info=%(network_info)s '
@@ -6241,13 +6279,17 @@ class LibvirtDriver(driver.ComputeDriver):
         # NOTE(mriedem): block_device_info can contain auth_password so we
         # need to sanitize the password in the message.
         LOG.debug(strutils.mask_password(msg), instance=instance)
+        LOG.debug("Tony >>> Start calling nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_config()")
         conf = self._get_guest_config(instance, network_info, image_meta,
                                       disk_info, rescue, block_device_info,
                                       context, mdevs, accel_info)
+        LOG.debug("Tony <<< End calling nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_config()")
+        #TODO(Tony) guest configuration to xml for libvirt
         xml = conf.to_xml()
 
         LOG.debug('End _get_guest_xml xml=%(xml)s',
                   {'xml': xml}, instance=instance)
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.dirver.py::LibvirtDriver{}::_get_guest_xml()")
         return xml
 
     def get_info(self, instance, use_cache=True):
@@ -6401,7 +6443,8 @@ class LibvirtDriver(driver.ComputeDriver):
                                    post_xml_callback=None,
                                    destroy_disks_on_failure=False,
                                    external_events=None):
-
+        # TODO(Tony): remote pdb
+        # import remote_pdb; remote_pdb.set_trace()
         """Do required network setup and create domain."""
         timeout = CONF.vif_plugging_timeout
         if (self._conn_supports_start_paused and not
@@ -6421,6 +6464,7 @@ class LibvirtDriver(driver.ComputeDriver):
                 with self._lxc_disk_handler(context, instance,
                                             instance.image_meta,
                                             block_device_info):
+                    
                     guest = self._create_domain(
                         xml, pause=pause, power_on=power_on,
                         post_xml_callback=post_xml_callback)

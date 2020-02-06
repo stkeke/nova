@@ -588,6 +588,7 @@ def _get_desirable_cpu_topologies(flavor, image_meta, allow_threads=True,
     :returns: sorted list of objects.VirtCPUTopology instances
     """
 
+    LOG.debug("Tony >>> Enter nova.virt.hardware.py::_get_desireable_cpu_topologies()")
     LOG.debug("Getting desirable topologies for flavor %(flavor)s "
               "and image_meta %(image_meta)s, allow threads: %(threads)s",
               {"flavor": flavor, "image_meta": image_meta,
@@ -626,6 +627,7 @@ def _get_desirable_cpu_topologies(flavor, image_meta, allow_threads=True,
 
     desired = _sort_possible_cpu_topologies(possible, preferred)
     LOG.debug("Sorted desired topologies %s", desired)
+    LOG.debug("Tony <<< Leave nova.virt.hardware.py::_get_desireable_cpu_topologies()")
     return desired
 
 
@@ -647,8 +649,10 @@ def get_best_cpu_topology(flavor, image_meta, allow_threads=True,
 
     :returns: an objects.VirtCPUTopology instance for best topology
     """
+    LOG.debug("Tony >>> Enter nova.virt.hardware.py::get_best_cpu_topology()")
     return _get_desirable_cpu_topologies(flavor, image_meta,
                                          allow_threads, numa_topology)[0]
+    LOG.debug("Tony <<< Leave nova.virt.hardware.py::get_best_cpu_topology()")
 
 
 def _numa_cell_supports_pagesize_request(host_cell, inst_cell):
