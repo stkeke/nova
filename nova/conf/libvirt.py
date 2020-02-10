@@ -894,7 +894,10 @@ Related options:
   :oslo.config:option:`libvirt.hw_machine_type`; see
   :ref:`deploying-sev-capable-infrastructure` for more on this.
 """),
+cfg.BoolOpt('cache_allocation_support', default='False', help="used for CAT"),
+cfg.IntOpt('l3_cacheway_size_KB', default=0, min = 0, help="used for CAT")
 ]
+# TODO(Tony): fix libvirt conf options above
 
 libvirt_imagebackend_opts = [
     cfg.StrOpt('images_type',
