@@ -10,5 +10,6 @@ openstack flavor set --property "hw:numa_nodes=2" --property "hw:numa_cpus.0=0-3
 openstack flavor set --property "hw:numa_mem.0=64" --property "hw:numa_mem.1=64" $flavor_name
 openstack flavor set --property "hw:numa_cache.0=2" --property "hw:numa_cache.1=4" $flavor_name
 openstack flavor set --property "hw:cpu_policy=dedicated" $flavor_name
+openstack flavor set --property "hw:cpu_thread_policy=require" $flavor_name
 openstack flavor show $flavor_name
 
