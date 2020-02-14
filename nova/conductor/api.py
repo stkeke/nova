@@ -131,10 +131,12 @@ class ComputeTaskAPI(object):
                                      admin_password, injected_files,
                                      requested_networks, block_device_mapping,
                                      tags=None):
+        LOG.debug("Tony >>> Start casting schedule_and_build_instances")
         self.conductor_compute_rpcapi.schedule_and_build_instances(
             context, build_requests, request_spec, image,
             admin_password, injected_files, requested_networks,
             block_device_mapping, tags)
+        LOG.debug("Tony <<< End casting schedule_and_build_instances")
 
     def unshelve_instance(self, context, instance, request_spec=None):
         self.conductor_compute_rpcapi.unshelve_instance(context,

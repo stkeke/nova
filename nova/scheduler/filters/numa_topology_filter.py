@@ -37,18 +37,24 @@ class NUMATopologyFilter(filters.BaseHostFilter):
         # NOTE(stephenfin): There can be conflicts between the policy
         # specified by the image and that specified by the instance, but this
         # is not the place to resolve these. We do this during scheduling.
+        LOG.debug("Tony extra_specs=(%(extra_specs)s)", {'extra_specs': extra_specs})
         cpu_policy = [extra_specs.get('hw:cpu_policy'),
                       image_props.get('hw_cpu_policy')]
         cpu_thread_policy = [extra_specs.get('hw:cpu_thread_policy'),
                              image_props.get('hw_cpu_thread_policy')]
 
         if not host_topology:
+            LOG.debug("Tony host_topology=None --> True")
             return True
 
         if fields.CPUAllocationPolicy.DEDICATED not in cpu_policy:
+            LOG.debug("Tony cpu_policy 'dedicated' not in (%(cpu_policy)s) --> True", 
+                        {'cpu_policy': cpu_policy})
             return True
 
         if fields.CPUThreadAllocationPolicy.REQUIRE not in cpu_thread_policy:
+            LOG.debug("Tony cpu_thread_policy 'require' not in (%(cpu_thread_policy)s) --> True", 
+                        {'cpu_thread_policy': cpu_thread_policy})
             return True
 
         if not host_topology.has_threads:
@@ -57,6 +63,18 @@ class NUMATopologyFilter(filters.BaseHostFilter):
                       "hyperthreading is disabled, but 'require' threads "
                       "policy was requested.", {'host_state': host_state})
             return False
+
+        # TODO(Tony): NUMATopologyFilter - Add RDT support
+        # TODO(Tony): This is actually checking flavor validity
+        # RDT requires 'dedicated' CPU policy
+        cat_cache = [extra_specs.get('hw:numa_cache.0'), 
+                     extra_specs.get('hw:numa_cache.1'), 
+                     extra_specs.get('hw:numa_cache')]
+        if any(cat_cache) and fields.CPUAllocationPolicy.DEDICATED not in cpu_policy:
+            LOG.debug("Tony Filter Failure: RDT requires 'dedicated' cpu_policy")
+            return False
+        else:
+            LOG.debug("Tony Filter PASS: Verified RDT and 'dedicated' cpu_policy")
 
         return True
 
@@ -68,12 +86,22 @@ class NUMATopologyFilter(filters.BaseHostFilter):
         # doing this. That's a large, non-backportable cleanup however, so for
         # now we just duplicate spec_obj to prevent changes propagating to
         # future filter calls.
+        LOG.debug("Tony >>> Enter NUMATopologyFilter{}::host_passes()")
+        # spec_obj: <class 'nova.objects.request_spec.RequestSpec'>
         spec_obj = spec_obj.obj_clone()
 
+        LOG.debug("Tony host_state=(%(host_state)s)", 
+                {'host_state': host_state})
+        
+        # host_state: <class 'nova.scheduler.host_manager.HostState'>
+        # TODO(Tony): remote pdb
+        # import remote_pdb; remote_pdb.set_trace()
         ram_ratio = host_state.ram_allocation_ratio
         cpu_ratio = host_state.cpu_allocation_ratio
         extra_specs = spec_obj.flavor.extra_specs
         image_props = spec_obj.image.properties
+
+        # host_topology: NUMATopology(cells=[NUMACell(UNKNOWN),NUMACell(1)])
         requested_topology = spec_obj.numa_topology
         host_topology = host_state.numa_topology
         pci_requests = spec_obj.pci_requests
@@ -87,6 +115,7 @@ class NUMATopologyFilter(filters.BaseHostFilter):
 
         if not self._satisfies_cpu_policy(host_state, extra_specs,
                                           image_props):
+            LOG.debug("Tony <<< Leave NUMATopologyFilter{}::host_passes()--> False")
             return False
 
         if requested_topology and host_topology:
@@ -108,8 +137,10 @@ class NUMATopologyFilter(filters.BaseHostFilter):
                           "host.", {'host': host_state.host,
                                     'node': host_state.nodename},
                           instance_uuid=spec_obj.instance_uuid)
+                LOG.debug("Tony <<< Leave NUMATopologyFilter{}::host_passes()--> False")
                 return False
             host_state.limits['numa_topology'] = limits
+            LOG.debug("Tony <<< Leave NUMATopologyFilter{}::host_passes()--> True")
             return True
         elif requested_topology:
             LOG.debug("%(host)s, %(node)s fails NUMA topology requirements. "
@@ -117,6 +148,8 @@ class NUMATopologyFilter(filters.BaseHostFilter):
                       "one.",
                       {'host': host_state.host, 'node': host_state.nodename},
                       instance_uuid=spec_obj.instance_uuid)
+            LOG.debug("Tony <<< Leave NUMATopologyFilter{}::host_passes()--> False")
             return False
         else:
+            LOG.debug("Tony <<< Leave NUMATopologyFilter{}::host_passes()--> True")
             return True

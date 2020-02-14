@@ -85,7 +85,7 @@ class Host(object):
     def __init__(self, uri, read_only=False,
                  conn_event_handler=None,
                  lifecycle_event_handler=None):
-
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.host.py::Host{}::__init__()")
         global libvirt
         if libvirt is None:
             libvirt = importutils.import_module('libvirt')
@@ -121,6 +121,7 @@ class Host(object):
         self._supports_amd_sev = None
 
         self._has_hyperthreading = None
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.host.py::Host{}::__init__()")
 
     @staticmethod
     def _get_libvirt_proxy_classes(libvirt_module):
@@ -701,6 +702,13 @@ class Host(object):
 
         :returns: a config.LibvirtConfigCaps object
         """
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.host.py::Host{}::get_capabilities()")
+        # TODO(Tony): Add RDT support
+        # only for debug
+        if self._caps:
+            pass
+            # LOG.debug("Tony _caps has already got; set to None for logging"); self._caps = None
+
         if not self._caps:
             xmlstr = self.get_connection().getCapabilities()
             self._log_host_capabilities(xmlstr)
@@ -730,6 +738,7 @@ class Host(object):
                                      {'uri': self._uri, 'error': ex})
                     else:
                         raise
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.host.py::Host{}::get_capabilities()")
         return self._caps
 
     def get_domain_capabilities(self):

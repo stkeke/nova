@@ -297,6 +297,7 @@ class LibvirtDriver(driver.ComputeDriver):
         # LVM and RBD require raw images. If we are not configured to
         # force convert images into raw format, then we _require_ raw
         # images only.
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.driver.py::LibvirtDriver{}::__init()")
         raw_only = ('rbd', 'lvm')
         requires_raw_image = (CONF.libvirt.images_type in raw_only and
                               not CONF.force_raw_images)
@@ -433,6 +434,7 @@ class LibvirtDriver(driver.ComputeDriver):
         # We default to not support vGPUs unless the configuration is set.
         self.pgpu_type_mapping = collections.defaultdict(str)
         self.supported_vgpu_types = self._get_supported_vgpu_types()
+        LOG.debug("Tony <<< Exit nova.virt.libvirt.driver.py::LibvirtDriver{}::__init()")
 
     def _discover_vpmems(self, vpmem_conf=None):
         """Discover vpmems on host and configuration.
@@ -2891,6 +2893,8 @@ class LibvirtDriver(driver.ComputeDriver):
 
         qemu_img_extra_arg.append(active_disk_object.source_path)
         # execute operation with disk concurrency semaphore
+        # TODO(Tony): remote_pdb
+        # import remote_pdb; remote_pdb.set_trace()
         with compute_utils.disk_ops_semaphore:
             processutils.execute("qemu-img", "rebase", "-b", backing_file,
                                  *qemu_img_extra_arg)
@@ -5080,7 +5084,13 @@ class LibvirtDriver(driver.ComputeDriver):
         # hw:numa_cpus.1="4-9"
         # hw:numa_cache.1=4
         # TODO(Tony): fix this hardcode; probably move it to a function
-        cacheway_size = 2304 # KB
+        cat_support = CONF.libvirt.cache_allocation_support
+        cacheway_size = CONF.libvirt.l3_cacheway_size_KB
+        LOG.debug('Tony CAT support = %s L3 Cacheway Size: %s KB from config file', 
+                cat_support, cacheway_size)
+
+        LOG.debug('Tony host capability xml: %(cap)s', 
+                { 'cap': self._host.get_capabilities().to_xml()})
         
         for i in ['0', '1']:
             cache_key = 'hw:numa_cache.' + i
@@ -6398,7 +6408,10 @@ class LibvirtDriver(driver.ComputeDriver):
 
         :returns guest.Guest: Guest just created
         """
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.driver.py::LibvirtDriver{}::_create_domain()")
         if xml:
+            # TODO(Tony): remote_pdb
+            # import remote_pdb; remote_pdb.set_trace()
             guest = libvirt_guest.Guest.create(xml, self._host)
             if post_xml_callback is not None:
                 post_xml_callback()
@@ -6407,7 +6420,8 @@ class LibvirtDriver(driver.ComputeDriver):
 
         if power_on or pause:
             guest.launch(pause=pause)
-
+        
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.driver.py::LibvirtDriver{}::_create_domain()")
         return guest
 
     def _neutron_failed_callback(self, event_name, instance):

@@ -587,10 +587,33 @@ class ServersController(wsgi.Controller):
     @validation.schema(schema_servers.base_create_v274, '2.74')
     def create(self, req, body):
         """Creates a new server for a given user."""
+
+        # Tony: context = <class 'nova.context.RequestContext'>
+        # Tony: req = <class 'nova.api.openstack.wsgi.Request'>
+        # Tony:  
+        # (Pdb) print(body)
+        # {
+        #     'server': 
+        #     {
+        #         'name': 'rdt_inst1', 
+        #         'imageRef': 'c51291b1-ea64-4c21-92b3-5c0c4f43201b', 
+        #         'flavorRef': '231607b6-6e3f-449d-af48-b6dcff8c1514', 
+        #         'min_count': 1, 
+        #         'max_count': 1, 
+        #         'networks': [{'uuid': '0fab8e38-d9d6-4b52-b981-77c525d40f1a'}]
+        #     }
+        # }
+        LOG.debug("Tony >>> Enter nova.api.openstack.compute.servers.py::ServerController{}::create()")
         context = req.environ['nova.context']
+
+        # Tony: get server dictionary from body
         server_dict = body['server']
         password = self._get_server_admin_password(server_dict)
+
+        # Tony: get server name
         name = common.normalize_name(server_dict['name'])
+
+        # Tony: get server description
         description = name
         if api_version_request.is_supported(req, min_version='2.19'):
             description = server_dict.get('description')
@@ -643,6 +666,10 @@ class ServersController(wsgi.Controller):
             'project_id': context.project_id,
             'user_id': context.user_id,
             'availability_zone': availability_zone}
+
+        # Tony: context.can() can raise Forbidden exception.
+        # This create() function does not check the return value, which means that
+        # we are going on unless there is an exception, ignoring the return value from can()
         context.can(server_policies.SERVERS % 'create', target)
 
         # Skip policy check for 'create:trusted_certs' if no trusted
@@ -653,12 +680,24 @@ class ServersController(wsgi.Controller):
             context.can(server_policies.SERVERS % 'create:trusted_certs',
                         target=target)
 
+        # Tony: parse_az points to static method 
+        #   API.parse_availability_zone(context, availability_zone) -> tuple
         parse_az = self.compute_api.parse_availability_zone
         try:
+            # Tony: debugger
+            # (Pdb) print(availability_zone)
+            # None
+            # (Pdb) print(host)
+            # None
+            # (Pdb) print(node)
+            # None
             availability_zone, host, node = parse_az(context,
                                                      availability_zone)
+            # TODO (Tony): remote pdb in create()
+            # import remote_pdb; remote_pdb.set_trace()
         except exception.InvalidInput as err:
             raise exc.HTTPBadRequest(explanation=six.text_type(err))
+
         if host or node:
             context.can(server_policies.SERVERS % 'create:forced_host', {})
 
@@ -682,6 +721,8 @@ class ServersController(wsgi.Controller):
             supports_multiattach = common.supports_multiattach_volume(req)
             supports_port_resource_request = \
                 common.supports_port_resource_request(req)
+
+            LOG.debug("Tony >>> Start calling nova.compute.api.py::API{}::create()")
             (instances, resv_id) = self.compute_api.create(context,
                 inst_type,
                 image_uuid,
@@ -695,6 +736,7 @@ class ServersController(wsgi.Controller):
                 supports_multiattach=supports_multiattach,
                 supports_port_resource_request=supports_port_resource_request,
                 **create_kwargs)
+            LOG.debug("Tony <<< End calling nova.compute.api.py::API{}::create()")
         except (exception.QuotaError,
                 exception.PortLimitExceeded) as error:
             raise exc.HTTPForbidden(
@@ -778,6 +820,7 @@ class ServersController(wsgi.Controller):
 
         robj = wsgi.ResponseObject(server)
 
+        LOG.debug("Tony <<< Leave nova.api.openstack.compute.servers.py::ServerController{}::create()")
         return self._add_location(robj)
 
     def _delete(self, context, req, instance_uuid):

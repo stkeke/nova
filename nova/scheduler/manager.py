@@ -131,6 +131,7 @@ class SchedulerManager(manager.Manager):
         format but *don't* want to get alternate hosts, as is the case with the
         conductors that handle certain move operations.
         """
+        LOG.debug("Tony >>> Enter nova.scheduler.manager.py::SchedulerManager{}::selection_destinations()")
         LOG.debug("Starting to schedule for instances: %s", instance_uuids)
 
         # TODO(sbauza): Change the method signature to only accept a spec_obj
@@ -210,14 +211,17 @@ class SchedulerManager(manager.Manager):
         # Only return alternates if both return_objects and return_alternates
         # are True.
         return_alternates = return_alternates and return_objects
+        LOG.debug("Tony >>> Start calling self.driver.selections()")
         selections = self.driver.select_destinations(ctxt, spec_obj,
                 instance_uuids, alloc_reqs_by_rp_uuid, provider_summaries,
                 allocation_request_version, return_alternates)
+        LOG.debug("Tony <<< End calling self.driver.selections()")
         # If `return_objects` is False, we need to convert the selections to
         # the older format, which is a list of host state dicts.
         if not return_objects:
             selection_dicts = [sel[0].to_dict() for sel in selections]
             return jsonutils.to_primitive(selection_dicts)
+        LOG.debug("Tony <<< Leave nova.scheduler.manager.py::SchedulerManager{}::selection_destinations()")
         return selections
 
     def update_aggregates(self, ctxt, aggregates):

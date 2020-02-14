@@ -1479,6 +1479,12 @@ class API(base.Base):
 
         tags = self._create_tag_list_obj(context, tags)
 
+        # Tony: instances_to_build is a list with each item of RequestSpec, BuildRequest, InstanceMapping
+        # (Pdb) print(instances_to_build)
+        # [(RequestSpec(availability_zone=None,flavor=Flavor(16),force_hosts=None,force_nodes=None,id=6,ignore_hosts=None,image=ImageMeta(cb3794b6-16c0-40a3-a27e-c00c4366ac11),instance_group=None,instance_uuid=a5aefbfa-6f96-40be-8dac-c942d0e4db82,is_bfv=False,limits=SchedulerLimits,network_metadata=NetworkMetadata,num_instances=1,numa_topology=InstanceNUMATopology(UNKNOWN),pci_requests=InstancePCIRequests,project_id='375dee95310e437e9972e26fa6cedba4',requested_destination=None,requested_resources=[],retry=None,scheduler_hints={},security_groups=SecurityGroupList,user_id='7c69d43ae605456996a3a8c1dff1b253'), 
+        # BuildRequest(block_device_mappings=BlockDeviceMappingList,created_at=2020-02-04T07:40:53Z,id=6,instance=Instance(a5aefbfa-6f96-40be-8dac-c942d0e4db82),instance_uuid=a5aefbfa-6f96-40be-8dac-c942d0e4db82,project_id='375dee95310e437e9972e26fa6cedba4',tags=TagList,updated_at=None), 
+        # InstanceMapping(cell_mapping=None,created_at=2020-02-04T07:40:53Z,id=6,instance_uuid=a5aefbfa-6f96-40be-8dac-c942d0e4db82,project_id='375dee95310e437e9972e26fa6cedba4',queued_for_delete=False,updated_at=None,user_id='7c69d43ae605456996a3a8c1dff1b253'))]
+
         instances_to_build = self._provision_instances(
             context, instance_type, min_count, max_count, base_options,
             boot_meta, security_groups, block_device_mapping,
@@ -1487,15 +1493,23 @@ class API(base.Base):
             supports_multiattach, network_metadata,
             requested_host, requested_hypervisor_hostname)
 
+        # TODO (Tony): remote pdb in nova.compute.api.py
+        # import remote_pdb; remote_pdb.set_trace()
+
         instances = []
         request_specs = []
         build_requests = []
+
+        # Tony: rs = RequestSpec
+        # im = InstanceMapping
         for rs, build_request, im in instances_to_build:
             build_requests.append(build_request)
             instance = build_request.get_new_instance(context)
             instances.append(instance)
             request_specs.append(rs)
 
+        # Tony: compute_task_api is an instance of nova.conductor.api.py::ComputeTaskAPI{}
+        # created in nova.compute.api.py::API{}::__init__() 
         self.compute_task_api.schedule_and_build_instances(
             context,
             build_requests=build_requests,
@@ -1964,6 +1978,8 @@ class API(base.Base):
                 msg = _('The requested availability zone is not available')
                 raise exception.InvalidRequest(msg)
 
+        # Tony: filter_properties is a dictionary returned by scheduler
+        # scheduler_utils = nova.scheduler.utils
         filter_properties = scheduler_utils.build_filter_properties(
                 scheduler_hints, forced_host, forced_node, instance_type)
 

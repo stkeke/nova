@@ -863,13 +863,17 @@ class ComputeTaskManager(base.Base):
 
     def _schedule_instances(self, context, request_spec,
                             instance_uuids=None, return_alternates=False):
+        LOG.debug("Tony >>> Enter nova.conductor.manager.py::ComputeTaskManager{}::_schedule_instance()")
         scheduler_utils.setup_instance_group(context, request_spec)
         with timeutils.StopWatch() as timer:
+            LOG.debug("Tony >>> Start rpc_calling self.query_client.selection_destinations()")
             host_lists = self.query_client.select_destinations(
                 context, request_spec, instance_uuids, return_objects=True,
                 return_alternates=return_alternates)
+            LOG.debug("Tony <<< End rpc_calling self.query_client.selection_destinations()")
         LOG.debug('Took %0.2f seconds to select destinations for %s '
                   'instance(s).', timer.elapsed(), len(instance_uuids))
+        LOG.debug("Tony <<< Leave nova.conductor.manager.py::ComputeTaskManager{}::_schedule_instance()")
         return host_lists
 
     @staticmethod
@@ -1457,6 +1461,9 @@ class ComputeTaskManager(base.Base):
                                      requested_networks, block_device_mapping,
                                      tags=None):
         # Add all the UUIDs for the instances
+        # TODO (Tony): remote pdb nova.conductor.manager
+        # import remote_pdb; remote_pdb.set_trace()
+        LOG.debug("Tony >>> Enter nova.condutor.manager::ComputeTaskManager{}::schedule_and_build_instances")
         instance_uuids = [spec.instance_uuid for spec in request_specs]
         try:
             host_lists = self._schedule_instances(context, request_specs[0],
@@ -1641,6 +1648,7 @@ class ComputeTaskManager(base.Base):
             legacy_secgroups = [s.identifier
                                 for s in request_spec.security_groups]
             with obj_target_cell(instance, cell) as cctxt:
+                LOG.debug("Tony >>> Start rpc_casting compute_rpcapi.build_and_run_instance()")    
                 self.compute_rpcapi.build_and_run_instance(
                     cctxt, instance=instance, image=image,
                     request_spec=request_spec,
@@ -1653,7 +1661,8 @@ class ComputeTaskManager(base.Base):
                     host=host.service_host, node=host.nodename,
                     limits=host.limits, host_list=host_list,
                     accel_uuids=accel_uuids)
-
+                LOG.debug("Tony <<< End rpc_casting compute_rpcapi.build_and_run_instance()")
+            LOG.debug("Tony <<< Leave nova.condutor.manager::ComputeTaskManager{}::schedule_and_build_instances")
     def _create_and_bind_arqs(self, context, instance_uuid, extra_specs,
                               hostname, resource_provider_mapping):
         """Create ARQs, determine their RPs and initiate ARQ binding.
