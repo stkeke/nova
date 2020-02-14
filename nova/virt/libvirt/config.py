@@ -82,6 +82,16 @@ class LibvirtConfigObject(object):
         return xml_str
 
 
+# TODO(Tony): Add RDT support
+# <cache>
+#    <bank id='0' level='3' type='both' size='25344' unit='KiB' cpus='0-17,36-53'>
+#       <control granularity='2304' unit='KiB' type='both' maxAllocs='16'/>
+#    </bank>
+#    <bank id='1' level='3' type='both' size='25344' unit='KiB' cpus='18-35,54-71'>
+#       <control granularity='2304' unit='KiB' type='both' maxAllocs='16'/>
+#    </bank>
+# </cache>
+
 class LibvirtConfigCaps(LibvirtConfigObject):
 
     def __init__(self, **kwargs):
