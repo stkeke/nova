@@ -68,6 +68,7 @@ class _Provider(object):
         # dict of resource records, keyed by resource class
         # the value is the set of objects.Resource
         self.resources = {}
+        # import remote_pdb; remote_pdb.set_trace()
 
     @classmethod
     def from_dict(cls, pdict):
@@ -249,9 +250,12 @@ class ProviderTree(object):
 
     def __init__(self):
         """Create an empty provider tree."""
+        LOG.debug("Tony >>> Enter nova.compute.provider_tree.py::ProviderTree{}::__init__()")
+        # import remote_pdb; remote_pdb.set_trace()
         self.lock = lockutils.internal_lock(_LOCK_NAME)
         self.roots_by_uuid = {}
         self.roots_by_name = {}
+        LOG.debug("Tony <<< Leave nova.compute.provider_tree.py::ProviderTree{}::__init__()")
 
     @property
     def roots(self):
@@ -406,6 +410,7 @@ class ProviderTree(object):
                  exists in the tree.
         """
 
+        LOG.debug("Tony >>> Enter nova.compute.provider_tree.py::ProviderTree{}::new_root()")
         with self.lock:
             exists = True
             try:
@@ -420,6 +425,7 @@ class ProviderTree(object):
             p = _Provider(name, uuid=uuid, generation=generation)
             self.roots_by_uuid[uuid] = p
             self.roots_by_name[name] = p
+            LOG.debug("Tony <<< Leave nova.compute.provider_tree.py::ProviderTree{}::new_root()")
             return p.uuid
 
     def _find_with_lock(self, name_or_uuid, return_root=False):
@@ -476,6 +482,8 @@ class ProviderTree(object):
                 already exists; or if parent_uuid points to a nonexistent
                 provider.
         """
+
+        LOG.debug("Tony >>> Enter nova.compute.provider_tree.py::ProviderTree{}::new_child()")
         with self.lock:
             try:
                 self._find_with_lock(uuid or name)
@@ -488,6 +496,7 @@ class ProviderTree(object):
             parent_node = self._find_with_lock(parent)
             p = _Provider(name, uuid, generation, parent_node.uuid)
             parent_node.add_child(p)
+            LOG.debug("Tony <<< Leave nova.compute.provider_tree.py::ProviderTree{}::new_child()")
             return p.uuid
 
     def has_inventory(self, name_or_uuid):
@@ -535,9 +544,13 @@ class ProviderTree(object):
         :param generation: The resource provider generation to set.  If not
                            specified, the provider's generation is not changed.
         """
+        LOG.debug("Tony >>> Enter nova.compute.prvoider_tree.py::ProviderTree{}::update_inventory()")
+        # import remote_pdb; remote_pdb.set_trace()
         with self.lock:
             provider = self._find_with_lock(name_or_uuid)
-            return provider.update_inventory(inventory, generation)
+            tmp_ret = provider.update_inventory(inventory, generation)
+            LOG.debug("Tony <<< Leave nova.compute.prvoider_tree.py::ProviderTree{}::update_inventory()")
+            return tmp_ret
 
     def has_sharing_provider(self, resource_class):
         """Returns whether the specified provider_tree contains any sharing

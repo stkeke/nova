@@ -9680,6 +9680,7 @@ class ComputeManager(manager.Manager):
     def _update_available_resource_for_node(self, context, nodename,
                                             startup=False):
 
+        LOG.debug("Tony >>> Enter nova.compute.manager.py::ComputeManager{}::_update_available_resource_for_node()")
         try:
             self.rt.update_available_resource(context, nodename,
                                               startup=startup)
@@ -9713,6 +9714,7 @@ class ComputeManager(manager.Manager):
         except Exception:
             LOG.exception("Error updating resources for node %(node)s.",
                           {'node': nodename})
+        LOG.debug("Tony <<< Leave nova.compute.manager.py::ComputeManager{}::_update_available_resource_for_node()")
 
     @periodic_task.periodic_task(spacing=CONF.update_resources_interval)
     def update_available_resource(self, context, startup=False):
@@ -9725,10 +9727,13 @@ class ComputeManager(manager.Manager):
         :param startup: True if this is being called when the nova-compute
             service is starting, False otherwise.
         """
+
+        LOG.debug("Tony >>> Enter nova.compute.manager.py::ComputeManager{}::update_available_resource()")
         try:
             nodenames = set(self.driver.get_available_nodes())
         except exception.VirtDriverNotReady:
             LOG.warning("Virt driver is not ready.")
+            LOG.debug("Tony <<< Leave nova.compute.manager.py::ComputeManager{}::update_available_resource()")
             return
 
         compute_nodes_in_db = self._get_compute_nodes_in_db(context,
@@ -9759,6 +9764,7 @@ class ComputeManager(manager.Manager):
         for nodename in nodenames:
             self._update_available_resource_for_node(context, nodename,
                                                      startup=startup)
+        LOG.debug("Tony <<< Leave nova.compute.manager.py::ComputeManager{}::update_available_resource()")
 
     def _get_compute_nodes_in_db(self, context, nodenames, use_slave=False,
                                  startup=False):

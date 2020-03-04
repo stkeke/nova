@@ -83,6 +83,7 @@ class FilterScheduler(driver.Scheduler):
                                   configuration option
                                   `CONF.scheduler.max_attempts`.
         """
+        LOG.debug("Tony >>> Enter nova.scheduler.filter_scheduler.py::FilterScheduler{}::select_destination()")
         self.notifier.info(
             context, 'scheduler.select_destinations.start',
             dict(request_spec=spec_obj.to_legacy_request_spec_dict()))
@@ -101,6 +102,7 @@ class FilterScheduler(driver.Scheduler):
             context=context, request_spec=spec_obj,
             action=fields_obj.NotificationAction.SELECT_DESTINATIONS,
             phase=fields_obj.NotificationPhase.END)
+        LOG.debug("Tony <<< Leave nova.scheduler.filter_scheduler.py::FilterScheduler{}::select_destination()")
         return host_selections
 
     def _schedule(self, context, spec_obj, instance_uuids,

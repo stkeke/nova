@@ -819,6 +819,7 @@ class ResourceTracker(object):
         :param startup: Boolean indicating whether we're running this on
                         on startup (True) or periodic (False).
         """
+        LOG.debug("Tony >>> Enter nova.compute.resource_tracker.py::ResourceTracker{}::update_available_resource()")
         LOG.debug("Auditing locally available compute resources for "
                   "%(host)s (node: %(node)s)",
                  {'node': nodename,
@@ -840,6 +841,7 @@ class ResourceTracker(object):
         self._report_hypervisor_resource_view(resources)
 
         self._update_available_resource(context, resources, startup=startup)
+        LOG.debug("Tony <<< Leave nova.compute.resource_tracker.py::ResourceTracker{}::update_available_resource()")
 
     def _pair_instances_to_migrations(self, migrations, instance_by_uuid):
         for migration in migrations:
@@ -1216,6 +1218,7 @@ class ResourceTracker(object):
             # ...and reserialize once we save it back
             cn.numa_topology = hardware.numa_usage_from_instance_numa(
                 host_numa_topology, instance_numa_topology, free)._to_json()
+            LOG.debug("Tony: numa_topology: %s", cn.numa_topology)
 
     def _get_migration_context_resource(self, resource, instance,
                                         prefix='new_'):

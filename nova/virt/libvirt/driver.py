@@ -7320,13 +7320,16 @@ class LibvirtDriver(driver.ComputeDriver):
         return False
 
     def _get_host_numa_topology(self):
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.driver.py::LibvirtDriver{}::_get_host_numa_topology()")
         if not self._has_numa_support():
+            LOG.debug("Tony <<< Leave nova.virt.libvirt.driver.py::LibvirtDriver{}::_get_host_numa_topology() NO NUMA SUPPORT")
             return
 
         caps = self._host.get_capabilities()
         topology = caps.host.topology
 
         if topology is None or not topology.cells:
+            LOG.debug("Tony <<< Leave nova.virt.libvirt.driver.py::LibvirtDriver{}::_get_host_numa_topology() NO CELLS")
             return
 
         cells = []
@@ -7438,7 +7441,10 @@ class LibvirtDriver(driver.ComputeDriver):
                 network_metadata=network_metadata)
             cells.append(cell)
 
-        return objects.NUMATopology(cells=cells)
+        # TODO(Tony): RDT: change for debug log
+        tmp_topo = objects.NUMATopology(cells=cells)
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.driver.py::LibvirtDriver{}::_get_host_numa_topology()")
+        return tmp_topo
 
     def get_all_volume_usage(self, context, compute_host_bdms):
         """Return usage info for volumes attached to vms on
@@ -8206,6 +8212,7 @@ class LibvirtDriver(driver.ComputeDriver):
         :returns: dictionary containing resource info
         """
 
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.driver.py::LibvirtDriver{}::get_available_resource()")
         disk_info_dict = self._get_local_gb_info()
         data = {}
 
@@ -8248,6 +8255,7 @@ class LibvirtDriver(driver.ComputeDriver):
         else:
             data['numa_topology'] = None
 
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.driver.py::LibvirtDriver{}::get_available_resource()")
         return data
 
     def check_instance_shared_storage_local(self, context, instance):

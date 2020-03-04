@@ -211,11 +211,11 @@ class SchedulerManager(manager.Manager):
         # Only return alternates if both return_objects and return_alternates
         # are True.
         return_alternates = return_alternates and return_objects
-        LOG.debug("Tony >>> Start calling self.driver.selections()")
+        LOG.debug("Tony >>> Start calling self.driver.select_destinations()")
         selections = self.driver.select_destinations(ctxt, spec_obj,
                 instance_uuids, alloc_reqs_by_rp_uuid, provider_summaries,
                 allocation_request_version, return_alternates)
-        LOG.debug("Tony <<< End calling self.driver.selections()")
+        LOG.debug("Tony <<< End calling self.driver.select_destinations()")
         # If `return_objects` is False, we need to convert the selections to
         # the older format, which is a list of host state dicts.
         if not return_objects:

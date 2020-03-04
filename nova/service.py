@@ -163,6 +163,8 @@ class Service(service.Service):
         # outside of oslo.db.
         context.CELL_CACHE = {}
 
+
+        LOG.debug("Tony >>> Enter nova.service.py::Service{}::start")
         assert_eventlet_uses_monotonic_clock()
 
         verstr = version.version_string_with_package()
@@ -224,6 +226,7 @@ class Service(service.Service):
                                      initial_delay=initial_delay,
                                      periodic_interval_max=
                                         self.periodic_interval_max)
+        LOG.debug("Tony <<< Leave nova.service.py::Service{}::start()")
 
     def __getattr__(self, key):
         manager = self.__dict__.get('manager', None)
