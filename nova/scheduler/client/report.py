@@ -516,6 +516,8 @@ class SchedulerReportClient(object):
         :raise: ResourceProviderCreationFailed or
                 ResourceProviderRetrievalFailed on error.
         """
+        
+        LOG.debug("Tony >>> Enter nova.scheduler.client.report.py::SchedulerReportClient{}::_create_resource_provider()")
         url = "/resource_providers"
         payload = {
             'uuid': uuid,
@@ -542,6 +544,7 @@ class SchedulerReportClient(object):
                 'placement_req_id': placement_req_id,
             }
             LOG.info(msg, args)
+            LOG.debug("Tony <<< Leave nova.scheduler.client.report.py::SchedulerReportClient{}::_create_resource_provider()")
             return resp.json()
 
         # TODO(efried): Push error codes from placement, and use 'em.
@@ -558,7 +561,9 @@ class SchedulerReportClient(object):
                 'placement_req_id': placement_req_id,
             }
             LOG.info(msg, args)
-            return self._get_resource_provider(context, uuid)
+            tmp_ret = self._get_resource_provider(context, uuid)
+            LOG.debug("Tony <<< Leave nova.scheduler.client.report.py::SchedulerReportClient{}::_create_resource_provider()")
+            return tmp_ret
 
         # A provider with the same *name* already exists, or some other error.
         msg = ("[%(placement_req_id)s] Failed to create resource provider "
@@ -571,6 +576,7 @@ class SchedulerReportClient(object):
             'placement_req_id': placement_req_id,
         }
         LOG.error(msg, args)
+        LOG.debug("Tony <<< Leave nova.scheduler.client.report.py::SchedulerReportClient{}::_create_resource_provider()")
         raise exception.ResourceProviderCreationFailed(name=name)
 
     def _ensure_resource_provider(self, context, uuid, name=None,
@@ -629,16 +635,41 @@ class SchedulerReportClient(object):
         # - "Cascading generations" - i.e. a change to a leaf node percolates
         #   generation bump up the tree so that we bounce 409 the next time we
         #   try to update anything and have to refresh.
+        LOG.debug("Tony in _ensure_resource_provider() provider tree=%s", self._provider_tree.__dict__)
         if (self._provider_tree.exists(uuid) and
                 not self._associations_stale(uuid)):
+            LOG.debug("Tony: uuid=%s found in self._provider_tree", uuid)
             uuids_to_refresh = [
                 u for u in self._provider_tree.get_provider_uuids(uuid)
                 if self._associations_stale(u)]
+            LOG.debug("Tony: uuids_to_refresh=%s", uuids_to_refresh)
         else:
             # We either don't have it locally or it's stale. Pull or create it.
+            LOG.debug("Tony: uuid=%s not found in self._provider_tree", uuid)
             created_rp = None
+            
+            # get resource providers from placement
             rps_to_refresh = self.get_providers_in_tree(context, uuid)
+            # [ {
+            # 'uuid': '4ec3a153-33c2-4553-a47c-e470f711468b', 
+            # 'name': 'new-2.maas', 
+            # 'generation': 284, 
+            # 'links': 
+            # [
+            #   {'rel': 'self',  'href': '/placement/resource_providers/4ec3a153-33c2-4553-a47c-e470f711468b'}, 
+            #   {'rel': 'inventories', 'href': '/placement/resource_providers/4ec3a153-33c2-4553-a47c-e470f711468b/inventories'}, 
+            #   {'rel': 'usages', 'href': '/placement/resource_providers/4ec3a153-33c2-4553-a47c-e470f711468b/usages'}, 
+            #   {'rel': 'aggregates', 'href': '/placement/resource_providers/4ec3a153-33c2-4553-a47c-e470f711468b/aggregates'}, 
+            #   {'rel': 'traits', 'href': '/placement/resource_providers/4ec3a153-33c2-4553-a47c-e470f711468b/traits'}, 
+            #   {'rel': 'allocations', 'href': '/placement/resource_providers/4ec3a153-33c2-4553-a47c-e470f711468b/allocations'}
+            # ], 
+            # 'parent_provider_uuid': None, 
+            # 'root_provider_uuid': '4ec3a153-33c2-4553-a47c-e470f711468b'
+            # } ]
+            LOG.debug("Tony: rps_to_refresh=%s", rps_to_refresh)
+            
             if not rps_to_refresh:
+                LOG.debug("Tony: create a new rp")
                 created_rp = self._create_resource_provider(
                     context, uuid, name or uuid,
                     parent_provider_uuid=parent_provider_uuid)
@@ -655,16 +686,20 @@ class SchedulerReportClient(object):
                 # But do mark it as having just been "refreshed".
                 self._association_refresh_time[uuid] = time.time()
 
+            LOG.debug("Tony: before calling _provider_tree.populate_from_iterable() provider tree=%s", self._provider_tree.__dict__)
             self._provider_tree.populate_from_iterable(
                 rps_to_refresh or [created_rp])
+            LOG.debug("Tony: after calling _provider_tree.populate_from_iterable() provider tree=%s", self._provider_tree.__dict__)
 
             uuids_to_refresh = [rp['uuid'] for rp in rps_to_refresh]
 
         # At this point, the whole tree exists in the local cache.
 
         for uuid_to_refresh in uuids_to_refresh:
+            LOG.debug("Tony: refresh uuid=%s", uuid_to_refresh)
+            LOG.debug("Tony: before calling _refresh_associations()")
             self._refresh_associations(context, uuid_to_refresh, force=True)
-
+            LOG.debug("Tony: after calling _refresh_associations()")
         return uuid
 
     def _delete_provider(self, rp_uuid, global_request_id=None):
@@ -754,6 +789,7 @@ class SchedulerReportClient(object):
         :raise: keystoneauth1.exceptions.ClientException if placement API
                 communication fails.
         """
+        # TODO: RDT need to deep dive into this function
         if force or self._associations_stale(rp_uuid):
             # Refresh inventories
             msg = "Refreshing inventories for resource provider %s"
@@ -852,10 +888,12 @@ class SchedulerReportClient(object):
         # some point this should be refactored, and this method can *just*
         # return a deep copy of the local _provider_tree cache.
         # (Re)populate the local ProviderTree
+        LOG.debug("Tony >>> Enter nova.scheduler.client.report.py::SchedulerReportClient::get_provider_tree_and_ensure_root()")
         self._ensure_resource_provider(
             context, rp_uuid, name=name,
             parent_provider_uuid=parent_provider_uuid)
         # Return a *copy* of the tree.
+        LOG.debug("Tony <<< Leave nova.scheduler.client.report.py::SchedulerReportClient::get_provider_tree_and_ensure_root()")
         return copy.deepcopy(self._provider_tree)
 
     def set_inventory_for_provider(self, context, rp_uuid, inv_data):

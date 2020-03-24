@@ -311,13 +311,16 @@ class ProviderTree(object):
         :raises: ValueError if any provider in provider_dicts has a parent that
                  is not in this ProviderTree or elsewhere in provider_dicts.
         """
+        LOG.debug("Tony >>> Enter nova.compute.provider_tree.py::ProviderTree{}::populate_from_iterable()")
         if not provider_dicts:
+            LOG.debug("Tony <<< Leave nova.compute.provider_tree.py::ProviderTree{}::populate_from_iterable()")
             return
 
         # Map of provider UUID to provider dict for the providers we're
         # *adding* via this method.
         to_add_by_uuid = {pd['uuid']: pd for pd in provider_dicts}
-
+        LOG.debug("Tony: to_add_by_uuid=%s", to_add_by_uuid)
+        
         with self.lock:
             # Sanity check for orphans.  Every parent UUID must either be None
             # (the provider is a root), or be in the tree already, or exist as
@@ -372,13 +375,17 @@ class ProviderTree(object):
                 if parent_uuid is None:
                     self.roots_by_uuid[provider.uuid] = provider
                     self.roots_by_name[provider.name] = provider
+                    LOG.debug("Tony: Add root provider:%s", provider.__dict__)
                 else:
                     parent = self._find_with_lock(parent_uuid)
                     parent.add_child(provider)
+                    LOG.debug("Tony: Add child provider:%s", provider.__dict__)
 
                 # Remove this entry to signify we're done with it.
                 to_add_by_uuid.pop(uuid)
 
+        LOG.debug("Tony <<< Leave nova.compute.provider_tree.py::ProviderTree{}::populate_from_iterable()")
+        
     def _remove_with_lock(self, name_or_uuid):
         found = self._find_with_lock(name_or_uuid)
         if found.parent_uuid:
