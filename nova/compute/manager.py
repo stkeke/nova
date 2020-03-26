@@ -9727,10 +9727,10 @@ class ComputeManager(manager.Manager):
         :param startup: True if this is being called when the nova-compute
             service is starting, False otherwise.
         """
-
         LOG.debug("Tony >>> Enter nova.compute.manager.py::ComputeManager{}::update_available_resource()")
         try:
             nodenames = set(self.driver.get_available_nodes())
+            LOG.debug("Tony: nodenames=%s", nodenames)
         except exception.VirtDriverNotReady:
             LOG.warning("Virt driver is not ready.")
             LOG.debug("Tony <<< Leave nova.compute.manager.py::ComputeManager{}::update_available_resource()")
@@ -9751,6 +9751,7 @@ class ComputeManager(manager.Manager):
                           'nodes': nodenames})
                 cn.destroy()
                 self.rt.remove_node(cn.hypervisor_hostname)
+                
                 # Delete the corresponding resource provider in placement,
                 # along with any associated allocations.
                 try:

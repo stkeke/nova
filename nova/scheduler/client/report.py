@@ -332,8 +332,10 @@ class SchedulerReportClient(object):
                         global_request_id=context.global_id)
         if resp.status_code == 200:
             data = resp.json()
-            return AggInfo(aggregates=set(data['aggregates']),
+            agg_info = AggInfo(aggregates=set(data['aggregates']),
                            generation=data['resource_provider_generation'])
+            LOG.debug("Tony: agg_info=%s", agg_info)
+            return agg_info
 
         placement_req_id = get_placement_request_id(resp)
         msg = ("[%(placement_req_id)s] Failed to retrieve aggregates from "
@@ -759,6 +761,12 @@ class SchedulerReportClient(object):
         LOG.debug('Updating ProviderTree inventory for provider %s from '
                   '_refresh_and_get_inventory using data: %s', rp_uuid,
                   curr['inventories'])
+        # curr['inventories']
+        # {
+        #  'VCPU': {'total': 72, 'reserved': 0, 'min_unit': 1, 'max_unit': 72, 'step_size': 1, 'allocation_ratio': 16.0}, 
+        #  'MEMORY_MB': {'total': 96850, 'reserved': 512, 'min_unit': 1, 'max_unit': 96850, 'step_size': 1, 'allocation_ratio': 1.5}, 
+        #  'DISK_GB': {'total': 1759, 'reserved': 0, 'min_unit': 1, 'max_unit': 1759, 'step_size': 1, 'allocation_ratio': 1.0}
+        # } 
         self._provider_tree.update_inventory(
             rp_uuid, curr['inventories'],
             generation=curr['resource_provider_generation'])
@@ -790,6 +798,8 @@ class SchedulerReportClient(object):
                 communication fails.
         """
         # TODO: RDT need to deep dive into this function
+        LOG.debug("Tony >>> Enter nova.scheduler.client.report.py::SchedulerReportClient{}::_refresh_associations()")
+        
         if force or self._associations_stale(rp_uuid):
             # Refresh inventories
             msg = "Refreshing inventories for resource provider %s"
@@ -815,6 +825,16 @@ class SchedulerReportClient(object):
             msg = ("Refreshing trait associations for resource provider %s, "
                    "traits: %s")
             LOG.debug(msg, rp_uuid, ','.join(traits or ['None']))
+
+            # traits sample:
+            # COMPUTE_NODE, COMPUTE_TRUSTED_CERTS,
+            # COMPUTE_NET_ATTACH_INTERFACE_WITH_TAG, COMPUTE_NET_ATTACH_INTERFACE, 
+            # COMPUTE_VOLUME_EXTEND, COMPUTE_VOLUME_ATTACH_WITH_TAG, COMPUTE_VOLUME_MULTI_ATTACH,
+            # COMPUTE_IMAGE_TYPE_AMI, COMPUTE_IMAGE_TYPE_AKI, COMPUTE_IMAGE_TYPE_QCOW2, COMPUTE_IMAGE_TYPE_ARI,
+            # COMPUTE_IMAGE_TYPE_ISO, COMPUTE_IMAGE_TYPE_RAW, 
+            # COMPUTE_DEVICE_TAGGING, 
+            # HW_CPU_X86_SSE2,HW_CPU_X86_MMX,HW_CPU_HYPERTHREADING,HW_CPU_X86_SSE,HW_CPU_X86_SVM
+             
             # NOTE(efried): This will blow up if called for a RP that doesn't
             # exist in our _provider_tree.
             self._provider_tree.update_traits(
@@ -840,7 +860,9 @@ class SchedulerReportClient(object):
                                                force=force,
                                                refresh_sharing=False)
             self._association_refresh_time[rp_uuid] = time.time()
-
+        
+            LOG.debug("Tony <<< Leave nova.scheduler.client.report.py::SchedulerReportClient()::_refresh_associations()")
+        
     def _associations_stale(self, uuid):
         """Respond True if aggregates and traits have not been refreshed
         "recently".
