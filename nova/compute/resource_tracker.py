@@ -828,6 +828,17 @@ class ResourceTracker(object):
         # NOTE(jaypipes): The resources['hypervisor_hostname'] field now
         # contains a non-None value, even for non-Ironic nova-compute hosts. It
         # is this value that will be populated in the compute_nodes table.
+        
+        # resources.keys()
+        # ['supported_instances', 'vcpus', 'memory_mb', 'local_gb', 
+        # 'vcpus_used', 'memory_mb_used', 'local_gb_used', 
+        # 'hypervisor_type', 'hypervisor_version', 'hypervisor_hostname', 
+        # 'cpu_info', 'disk_available_least', 'pci_passthrough_devices', 'numa_topology']
+        
+        # TODO(Tony): RDT - suppport CAT
+        resources['cat_enabled'] = True
+        LOG.debug("Tony: numa_topology=%s", resources['numa_topology'])
+        
         resources['host_ip'] = CONF.my_ip
 
         # We want the 'cpu_info' to be None from the POV of the

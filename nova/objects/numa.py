@@ -41,6 +41,9 @@ class NUMACell(base.NovaObject):
         'siblings': obj_fields.ListOfSetsOfIntegersField(),
         'mempages': obj_fields.ListOfObjectsField('NUMAPagesTopology'),
         'network_metadata': obj_fields.ObjectField('NetworkMetadata'),
+        # TODO(Tony): RDT - support CAT - upgrade Version??
+        'llc_cacheways_total': obj_fields.IntegerField(),
+        'llc_cacheways_usage': obj_fields.IntegerField()
     }
 
     def obj_make_compatible(self, primitive, target_version):
@@ -76,6 +79,10 @@ class NUMACell(base.NovaObject):
     def avail_memory(self):
         return self.memory - self.memory_usage
 
+    @property
+    def avail_llc_cacheways(self):
+        return self.llc_cacheways_total - self.llc_cacheways_usage
+    
     @property
     def has_threads(self):
         """Check if SMT threads, a.k.a. HyperThreads, are present."""

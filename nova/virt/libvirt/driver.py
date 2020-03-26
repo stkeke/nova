@@ -7438,7 +7438,10 @@ class LibvirtDriver(driver.ComputeDriver):
                 memory_usage=0,
                 siblings=siblings,
                 mempages=mempages,
-                network_metadata=network_metadata)
+                network_metadata=network_metadata,
+                # TODO(Tony): RDT - support CAT
+                llc_cacheways_total=8,
+                llc_cacheways_usage=0)
             cells.append(cell)
 
         # TODO(Tony): RDT: change for debug log
@@ -7555,6 +7558,7 @@ class LibvirtDriver(driver.ComputeDriver):
         :raises: ReshapeFailed if the requested tree reshape fails for
             whatever reason.
         """
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.driver.py::LibvirtDriver{}::update_provider_tree()")
         disk_gb = int(self._get_local_gb_info()['total'])
         memory_mb = int(self._host.get_memory_mb_total())
         vcpus = len(self._get_vcpu_available())
@@ -7654,6 +7658,7 @@ class LibvirtDriver(driver.ComputeDriver):
         # Now that we updated the ProviderTree, we want to store it locally
         # so that spawn() or other methods can access it thru a getter
         self.provider_tree = copy.deepcopy(provider_tree)
+        LOG.debug("Tony <<< Leave nova.virt.libvirt.driver.py::LibvirtDriver{}::update_provider_tree()")
 
     def _update_provider_tree_for_vpmems(self, provider_tree, nodename,
                                          inventory, resources):
