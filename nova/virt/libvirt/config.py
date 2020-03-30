@@ -81,17 +81,6 @@ class LibvirtConfigObject(object):
                                  pretty_print=pretty_print)
         return xml_str
 
-
-# TODO(Tony): Add RDT support
-# <cache>
-#    <bank id='0' level='3' type='both' size='25344' unit='KiB' cpus='0-17,36-53'>
-#       <control granularity='2304' unit='KiB' type='both' maxAllocs='16'/>
-#    </bank>
-#    <bank id='1' level='3' type='both' size='25344' unit='KiB' cpus='18-35,54-71'>
-#       <control granularity='2304' unit='KiB' type='both' maxAllocs='16'/>
-#    </bank>
-# </cache>
-
 class LibvirtConfigCaps(LibvirtConfigObject):
 
     def __init__(self, **kwargs):
@@ -443,6 +432,305 @@ class LibvirtConfigCapsNUMAPages(LibvirtConfigObject):
         return pages
 
 
+# TODO(Tony): Add RDT support
+# <host>
+#   <cache>
+#      <bank id='0' level='3' type='both' size='25344' unit='KiB' cpus='0-17,36-53'>
+#         <control granularity='2304' unit='KiB' type='both' maxAllocs='16'/>
+#      </bank>
+#      <bank id='1' level='3' type='both' size='25344' unit='KiB' cpus='18-35,54-71'>
+#         <control granularity='2304' unit='KiB' type='both' maxAllocs='16'/>
+#      </bank>
+#      <monitor level='3' reuseThreshold='147456' maxMonitors='144'>
+#        <feature name='llc_occupancy'/>
+#      </monitor>
+#   </cache>
+
+#   <memory_bandwidth>
+#       <node id='0' cpus='0-17,36-53'>
+#         <control granularity='10' min ='10' maxAllocs='8'/>
+#       </node>
+#       <node id='1' cpus='18-35,54-71'>
+#         <control granularity='10' min ='10' maxAllocs='8'/>
+#       </node>
+#   </memory_bandwidth>
+#  </host>
+
+# wrapper class for 
+#   <control granularity='2304' unit='KiB' type='both' maxAllocs='16'/>
+class LibvirtConfigCapsHostCacheBankControl(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostCacheBankControl, self).__init__(root_name="control", 
+                                                         **kwargs)
+        
+        self.granularity = None
+        self.unit = None
+        self.type = None
+        self.maxAllocs = None
+    
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostCacheBankControl, self).parse_dom(xmldoc)
+        
+        self.granularity = int(xmldoc.get("granularity"))
+        self.unit = xmldoc.get("unit")
+        self.type = xmldoc.get("type")
+        self.maxAllocs = int(xmldoc.get("maxAllocs"))
+
+    def format_dom(self):
+        control = super(LibvirtConfigCapsHostCacheBankControl, self).format_dom()
+        control.set("granularity", str(self.granularity))
+        control.set("unit", self.unit)
+        control.set("type", self.type)
+        control.set("maxAllocs", str(self.maxAllocs))
+        
+        return control
+        
+# wrapper class for 
+#   <bank id='0' level='3' type='both' size='25344' unit='KiB' cpus='0-17,36-53'>
+#        <control .../>
+#   </bank>
+class LibvirtConfigCapsHostCacheBank(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostCacheBank, self).__init__(root_name="bank", 
+                                                         **kwargs)
+        
+        self.id = None
+        self.level = None
+        self.type = None
+        self.size = None
+        self.unit = None
+        self.cpus = None
+        self.control = None
+    
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostCacheBank, self).parse_dom(xmldoc)
+        
+        self.id = int(xmldoc.get("id"))
+        self.level = int(xmldoc.get("level"))
+        self.type = xmldoc.get("type")
+        self.size = int(xmldoc.get("size"))
+        self.unit = xmldoc.get("unit")
+        self.cpus = xmldoc.get("cpus")
+        
+        for c in xmldoc:
+            if c.tag == "control":
+                self.control = LibvirtConfigCapsHostCacheBankControl()
+                self.control.parse_dom(c)
+
+    def format_dom(self):
+        bank = super(LibvirtConfigCapsHostCacheBank, self).format_dom()
+        
+        bank.set("id", str(self.id))
+        bank.set("level", str(self.level))
+        bank.set("type", self.type)
+        bank.set("size", str(self.size))
+        bank.set("unit", self.unit)
+        bank.set("cpus", self.cpus)
+        
+        if self.control:
+            bank.append(self.control.format_dom())
+        
+        return bank
+
+
+
+# wrapper class for
+#      <monitor level='3' reuseThreshold='147456' maxMonitors='144'>
+#        <feature name='llc_occupancy'/>
+#      </monitor>
+
+class LibvirtConfigCapsHostCacheMonitorFeature(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostCacheMonitorFeature, self).__init__(root_name="feature", 
+                                                         **kwargs)
+        
+        self.name = None
+        
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostCacheMonitorFeature, self).parse_dom(xmldoc)
+        
+        self.name = xmldoc.get("name")
+       
+    def format_dom(self):
+        feature = super(LibvirtConfigCapsHostCacheMonitorFeature, self).format_dom()
+        
+        feature.set("name", self.name)
+        
+        return feature
+class LibvirtConfigCapsHostCacheMonitor(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostCacheMonitor, self).__init__(root_name="monitor", 
+                                                         **kwargs)
+        
+        self.level = None
+        self.reuseThreshold = None
+        self.maxMonitors = None
+        self.feature = None
+    
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostCacheMonitor, self).parse_dom(xmldoc)
+        
+        self.level = int(xmldoc.get("level"))
+        self.reuseThreshold = int(xmldoc.get("reuseThreshold"))
+        self.maxMonitors = int(xmldoc.get("maxMonitors"))
+        
+        for c in xmldoc:
+            if c.tag == "feature":
+                self.control = LibvirtConfigCapsHostCacheMonitorFeature()
+                self.control.parse_dom(c)
+
+    def format_dom(self):
+        monitor = super(LibvirtConfigCapsHostCacheMonitor, self).format_dom()
+        
+        monitor.set("level", str(self.level))
+        monitor.set("reuseThreshold", str(self.reuseThreshold))
+        monitor.set("maxMonitors", str(self.maxMonitors))
+        
+        if self.feature:
+            monitor.append(self.feature.format_dom())
+        
+        return monitor
+
+
+# wrapper class for
+#   <cache>
+#      <bank id='0' level='3' type='both' size='25344' unit='KiB' cpus='0-17,36-53'>
+#         ...
+#      </bank>
+#      <bank id='1' level='3' type='both' size='25344' unit='KiB' cpus='18-35,54-71'>
+#         ...
+#      </bank>
+#      <monitor> 
+#         ...
+#      </monitor>
+#   </cache>
+class LibvirtConfigCapsHostCache(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostCache, self).__init__(root_name="cache", 
+                                                         **kwargs)
+        
+        self.banks = []
+        self.monitor = None
+    
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostCache, self).parse_dom(xmldoc)
+        
+        for c in xmldoc:
+            if c.tag == "bank":
+                bank = LibvirtConfigCapsHostCacheBank()
+                bank.parse_dom(c)
+                self.banks.append(bank)
+            elif c.tag == "monitor":
+                monitor = LibvirtConfigCapsHostCacheMonitor()
+                monitor.parse_dom(c)
+                self.monitor = monitor
+    
+    def format_dom(self):
+        cache = super(LibvirtConfigCapsHostCache, self).format_dom()
+        
+        for bank in self.banks:
+            cache.append(bank.format_dom())
+        
+        if self.monitor:
+            cache.append(self.monitor.format_dom())
+            
+        return cache
+    
+
+# RDT MBA capability
+# <host>
+#   <memory_bandwidth>
+#       <node id='0' cpus='0-17,36-53'>
+#         <control granularity='10' min ='10' maxAllocs='8'/>
+#       </node>
+#       <node id='1' cpus='18-35,54-71'>
+#         <control granularity='10' min ='10' maxAllocs='8'/>
+#       </node>
+#   </memory_bandwidth>
+# </host>
+
+class LibvirtConfigCapsHostMemoryBandwidthNodeControl(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostMemoryBandwidthNodeControl, self).__init__(root_name="control", 
+                                                         **kwargs)
+        
+        self.granularity = None
+        self.min = None
+        self.maxAllocs = None
+        
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostMemoryBandwidthNodeControl, self).parse_dom(xmldoc)
+        
+        self.granularity = int(xmldoc.get("granularity"))
+        self.min = int(xmldoc.get("min"))
+        self.maxAllocs = int(xmldoc.get("maxAllocs"))
+                    
+    def format_dom(self):
+        control = super(LibvirtConfigCapsHostMemoryBandwidthNodeControl, self).format_dom()
+        
+        control.set("granualarity", str(self.granularity))
+        control.set("min", str(self.min))
+        control.set("maxAllocs", str(self.maxAllocs))
+        
+        return control
+    
+class LibvirtConfigCapsHostMemoryBandwidthNode(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostMemoryBandwidthNode, self).__init__(root_name="node", 
+                                                         **kwargs)
+        
+        self.id = None
+        self.cpus = None
+        self.control = None
+        
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostMemoryBandwidthNode, self).parse_dom(xmldoc)
+        
+        self.id = int(xmldoc.get("id"))
+        self.cpus = xmldoc.get("cpus")
+        for c in xmldoc:
+            if c.tag == "control":
+                control = LibvirtConfigCapsHostMemoryBandwidthNodeControl()
+                control.parse_dom(c)
+                
+                self.control = control
+            
+    def format_dom(self):
+        node = super(LibvirtConfigCapsHostMemoryBandwidthNode, self).format_dom()
+        
+        node.set("id", str(self.id))
+        node.set("cpus", str(self.cpus))
+        
+        if self.control:
+            node.append(self.control.format_dom())         
+    
+        return node
+    
+class LibvirtConfigCapsHostMemoryBandwidth(LibvirtConfigObject):
+    def __init__(self, **kwargs):
+        super(LibvirtConfigCapsHostMemoryBandwidth, self).__init__(root_name="memory_bandwidth", 
+                                                         **kwargs)
+        
+        self.nodes = []
+        
+    def parse_dom(self, xmldoc):
+        super(LibvirtConfigCapsHostMemoryBandwidth, self).parse_dom(xmldoc)
+        
+        for c in xmldoc:
+            if c.tag == "node":
+                node = LibvirtConfigCapsHostMemoryBandwidthNode()
+                node.parse_dom(c)
+                self.nodes.append(node)
+            
+    def format_dom(self):
+        mb = super(LibvirtConfigCapsHostMemoryBandwidth, self).format_dom()
+        
+        for node in self.nodes:
+            mb.append(node.format_dom())
+                 
+        return mb
+
+
 class LibvirtConfigCapsHost(LibvirtConfigObject):
 
     def __init__(self, **kwargs):
@@ -452,6 +740,9 @@ class LibvirtConfigCapsHost(LibvirtConfigObject):
         self.cpu = None
         self.uuid = None
         self.topology = None
+        # TODO(Tony): RDT support
+        self.cache = None
+        self.memory_bandwidth = None
 
     def parse_dom(self, xmldoc):
         super(LibvirtConfigCapsHost, self).parse_dom(xmldoc)
@@ -466,6 +757,13 @@ class LibvirtConfigCapsHost(LibvirtConfigObject):
             elif c.tag == "topology":
                 self.topology = LibvirtConfigCapsNUMATopology()
                 self.topology.parse_dom(c)
+            # TODO(Tony): RDT support
+            elif c.tag == "cache":
+                self.cache = LibvirtConfigCapsHostCache()
+                self.cache.parse_dom(c)
+            elif c.tag == "memory_bandwidth":
+                self.memory_bandwidth = LibvirtConfigCapsHostMemoryBandwidth()
+                self.memory_bandwidth.parse_dom(c)
 
     def format_dom(self):
         caps = super(LibvirtConfigCapsHost, self).format_dom()
@@ -476,7 +774,12 @@ class LibvirtConfigCapsHost(LibvirtConfigObject):
             caps.append(self.cpu.format_dom())
         if self.topology:
             caps.append(self.topology.format_dom())
-
+        # TODO(Tony): RDT support: debug this code
+        if self.cache:
+            caps.append(self.cache.format_dom())
+        if self.memory_bandwidth:
+            caps.append(self.memory_bandwidth.format_dom())
+            
         return caps
 
 
