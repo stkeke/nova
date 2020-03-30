@@ -836,7 +836,9 @@ class ResourceTracker(object):
         # 'cpu_info', 'disk_available_least', 'pci_passthrough_devices', 'numa_topology']
         
         # TODO(Tony): RDT - suppport CAT
-        resources['cat_enabled'] = True
+        resources['cache_allocation_support'] = CONF.libvirt.cache_allocation_support
+        LOG.debug("Tony: cache_allocation_support=%s", 
+                  str(resources['cache_allocation_support']))
         LOG.debug("Tony: numa_topology=%s", resources['numa_topology'])
         
         resources['host_ip'] = CONF.my_ip

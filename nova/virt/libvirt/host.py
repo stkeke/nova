@@ -85,7 +85,7 @@ class Host(object):
     def __init__(self, uri, read_only=False,
                  conn_event_handler=None,
                  lifecycle_event_handler=None):
-        LOG.debug("Tony >>> Enter nova.virt.libvirt.host.py::Host{}::__init__()")
+        LOG.debug("Tony >>> Enter nova.virt.libvirt.host.py::Host{}::__init__() with uri=%s", uri)
         global libvirt
         if libvirt is None:
             libvirt = importutils.import_module('libvirt')

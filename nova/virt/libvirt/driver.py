@@ -7424,6 +7424,10 @@ class LibvirtDriver(driver.ComputeDriver):
                 physnets=physnet_affinities[cell.id],
                 tunneled=tunnel_affinities[cell.id])
 
+            # TODO(Tony): RDT - CAT support
+            llc_cacheways_total=int(CONF.libvirt.reserved_cacheways[cell.id])
+            LOG.debug("Tony: llc_cacheways_total[%d]=%d", cell.id, llc_cacheways_total)
+            
             # NOTE(stephenfin): Note that we don't actually return any usage
             # information here. This is because this is handled by the resource
             # tracker via the 'update_available_resource' periodic task, which
@@ -7440,7 +7444,7 @@ class LibvirtDriver(driver.ComputeDriver):
                 mempages=mempages,
                 network_metadata=network_metadata,
                 # TODO(Tony): RDT - support CAT
-                llc_cacheways_total=8,
+                llc_cacheways_total=llc_cacheways_total,
                 llc_cacheways_usage=0)
             cells.append(cell)
 

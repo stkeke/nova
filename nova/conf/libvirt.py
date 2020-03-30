@@ -895,7 +895,9 @@ Related options:
   :ref:`deploying-sev-capable-infrastructure` for more on this.
 """),
 cfg.BoolOpt('cache_allocation_support', default='False', help="used for CAT"),
-cfg.IntOpt('l3_cacheway_size_KB', default=0, min = 0, help="used for CAT")
+cfg.IntOpt('l3_cacheway_size_KB', default=0, min = 0, help="used for CAT"),
+cfg.ListOpt('reserved_cacheways', default=[], help="used for CAT"),
+cfg.BoolOpt('memory_bandwidth_limiting', default='False', help="used for MBA")
 ]
 # TODO(Tony): fix libvirt conf options above
 
