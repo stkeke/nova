@@ -833,13 +833,15 @@ class ResourceTracker(object):
         # ['supported_instances', 'vcpus', 'memory_mb', 'local_gb', 
         # 'vcpus_used', 'memory_mb_used', 'local_gb_used', 
         # 'hypervisor_type', 'hypervisor_version', 'hypervisor_hostname', 
-        # 'cpu_info', 'disk_available_least', 'pci_passthrough_devices', 'numa_topology']
+        # 'cpu_info', 'disk_available_least', 'pci_passthrough_devices', 'numa_resoutopology']
         
         # TODO(Tony): RDT - suppport CAT
         resources['cache_allocation_support'] = CONF.libvirt.cache_allocation_support
         LOG.debug("Tony: cache_allocation_support=%s", 
                   str(resources['cache_allocation_support']))
-        LOG.debug("Tony: numa_topology=%s", resources['numa_topology'])
+        # import remote_pdb; remote_pdb.set_trace()
+        LOG.debug("Tony: llc_cacheways_total=%s", resources['llc_cacheways_total'])
+        LOG.debug("Tony: llc_cacheways_used=%s", resources['llc_cacheways_used'])
         
         resources['host_ip'] = CONF.my_ip
 
@@ -894,9 +896,21 @@ class ResourceTracker(object):
                             'flavor', 'migration_context',
                             'resources'])
 
+        # TODO(Tony): RDT: CAT - calculate available cacheways
+        if resources['cache_allocation_support']:
+            for instance in instances:
+                resources['llc_cacheways_used'] = [u + i 
+                        for u, i in 
+                        zip(resources['llc_cacheways_used'], instance.llc_cacheways)]
+        
+            resources['llc_cacheways_avail'] = [t - u 
+                            for t, u in 
+                            zip(resources['llc_cacheways_total'], resources['llc_cacheways_used'])]
+        
         # Now calculate usage based on instance utilization:
         instance_by_uuid = self._update_usage_from_instances(
             context, instances, nodename)
+
 
         # Grab all in-progress migrations:
         migrations = objects.MigrationList.get_in_progress_by_host_and_node(
@@ -1395,6 +1409,8 @@ class ResourceTracker(object):
             is_removed=False):
         """Update usage for a single instance."""
 
+        LOG.debug("Tony: context:%s instance:%s nodename=%s", context, instance, nodename)
+        # import remote_pdb; remote_pdb.set_trace()
         uuid = instance['uuid']
         is_new_instance = uuid not in self.tracked_instances
         # NOTE(sfinucan): Both brand new instances as well as instances that

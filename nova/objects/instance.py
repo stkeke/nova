@@ -246,6 +246,15 @@ class Instance(base.NovaPersistentObject, base.NovaObject,
         super(Instance, self).__init__(*args, **kwargs)
         self._reset_metadata_tracking()
 
+    # TODO(Tony): RDT
+    @property
+    def llc_cacheways(self):
+        return self.flavor.get_llc_cacheways()
+    
+    @property
+    def mba_bandwidth(self):
+        return self.flavor.get_mba_bandwidth()
+    
     @property
     def image_meta(self):
         return objects.ImageMeta.from_instance(self)

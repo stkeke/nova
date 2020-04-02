@@ -226,6 +226,28 @@ class Flavor(base.NovaPersistentObject, base.NovaObject,
         self._orig_extra_specs = {}
         self._orig_projects = []
 
+    # TODO(Tony): add CAT support
+    def get_llc_cacheways(self):
+        """return a list of llc cacheways defined in this flavor"""
+        llc_cacheways=[]
+        
+        for i in ['0', '1']:
+            cache_key = 'hw:numa_cache.' + i
+            if cache_key in self.extra_specs.keys():
+                cacheways = int(self.extra_specs[cache_key])
+                llc_cacheways.append(cacheways)
+        return llc_cacheways
+        
+    def get_mba_bandwidth(self):
+        mba_bw=[]
+        for i in ['0', '1']:
+            mba_key = 'hw:numa_bandwidth.' + i
+            if mba_key in self.extra_specs.keys():
+                bw = int(self.extra_specs[mba_key])
+                mba_bw.append(mba_bw)
+        return mba_bw
+        
+    
     def obj_make_compatible(self, primitive, target_version):
         super(Flavor, self).obj_make_compatible(primitive, target_version)
         target_version = versionutils.convert_version_to_tuple(target_version)

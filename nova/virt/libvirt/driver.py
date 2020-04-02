@@ -8261,6 +8261,10 @@ class LibvirtDriver(driver.ComputeDriver):
         numa_topology = self._get_host_numa_topology()
         if numa_topology:
             data['numa_topology'] = numa_topology._to_json()
+            # TODO(Tony): RDT: CAT support
+            data['llc_cacheways_total'] = [numa_topology.cells[0].llc_cacheways_total,
+                                    numa_topology.cells[1].llc_cacheways_total]
+            data['llc_cacheways_used'] = [0, 0]
         else:
             data['numa_topology'] = None
 
