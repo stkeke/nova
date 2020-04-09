@@ -692,6 +692,11 @@ class Host(object):
         # big and it can cause subunit parsing to fail (see bug 1813147).
         LOG.info("Libvirt host capabilities %s", xmlstr)
 
+    # TODO(Tony): RDT
+    def get_llc_cacheways_total(self):
+        return self.get_capabilities().host.cache.banks[0].size // \
+            self.get_capabilities().host.cache.banks[0].control.granularity
+    
     def get_capabilities(self):
         """Returns the host capabilities information
 

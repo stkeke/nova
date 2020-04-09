@@ -7568,7 +7568,7 @@ class LibvirtDriver(driver.ComputeDriver):
         vcpus = len(self._get_vcpu_available())
         pcpus = len(self._get_pcpu_available())
         memory_enc_slots = self._get_memory_encrypted_slots()
-
+        
         # NOTE(yikun): If the inv record does not exists, the allocation_ratio
         # will use the CONF.xxx_allocation_ratio value if xxx_allocation_ratio
         # is set, and fallback to use the initial_xxx_allocation_ratio
@@ -7619,6 +7619,21 @@ class LibvirtDriver(driver.ComputeDriver):
                 'reserved': 0,
             }
 
+        # TODO(Tony): RDT
+        if CONF.libvirt.cache_allocation_support:
+            llc_cacheways_total = self._host.get_llc_cacheways_total()
+            LOG.debug("Tony: llc_cacheways_total=%d", llc_cacheways_total)
+            
+            # TODO(Tony): change to actual value 
+            # result[orc.L3_UNIFIED_CACHE_WAY] = {
+            #     'total': llc_cacheways_total,
+            #     'min_unit': 1,
+            #     'max_unit': llc_cacheways_total,
+            #     'step_size': 1,
+            #     'allocation_ratio': 1.0,
+            #     'reserved': 1,
+            # }
+            
         # If a sharing DISK_GB provider exists in the provider tree, then our
         # storage is shared, and we should not report the DISK_GB inventory in
         # the compute node provider.

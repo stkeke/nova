@@ -667,9 +667,13 @@ class ResourceTracker(object):
             False otherwise
         """
         nodename = resources['hypervisor_hostname']
+        
+        # when nova-compute service is starting up, compute_nodes is empty.
+        LOG.debug("Tony: self.compute_nodes=%s", self.compute_nodes)
 
         # if there is already a compute node just use resources
         # to initialize
+        # Tony: for perioic task while compute service is running
         if nodename in self.compute_nodes:
             cn = self.compute_nodes[nodename]
             self._copy_resources(cn, resources)
@@ -678,11 +682,14 @@ class ResourceTracker(object):
 
         # now try to get the compute node record from the
         # database. If we get one we use resources to initialize
+        # Tony: on compute service startup, 
+        # we first get ComputeNode from database.
         cn = self._get_compute_node(context, nodename)
         if cn:
             self.compute_nodes[nodename] = cn
             self._copy_resources(cn, resources)
             self._setup_pci_tracker(context, cn, resources)
+            LOG.debug("Tony: with database self.compute_nodes=%s", self.compute_nodes)
             return False
 
         if self._check_for_nodes_rebalance(context, resources, nodename):
@@ -833,7 +840,7 @@ class ResourceTracker(object):
         # ['supported_instances', 'vcpus', 'memory_mb', 'local_gb', 
         # 'vcpus_used', 'memory_mb_used', 'local_gb_used', 
         # 'hypervisor_type', 'hypervisor_version', 'hypervisor_hostname', 
-        # 'cpu_info', 'disk_available_least', 'pci_passthrough_devices', 'numa_resoutopology']
+        # 'cpu_info', 'disk_available_least', 'pci_passthrough_devices', 'numa_topology']
         
         # TODO(Tony): RDT - suppport CAT
         resources['cache_allocation_support'] = CONF.libvirt.cache_allocation_support
@@ -895,19 +902,9 @@ class ResourceTracker(object):
                             'numa_topology',
                             'flavor', 'migration_context',
                             'resources'])
-
-        # TODO(Tony): RDT: CAT - calculate available cacheways
-        if resources['cache_allocation_support']:
-            for instance in instances:
-                resources['llc_cacheways_used'] = [u + i 
-                        for u, i in 
-                        zip(resources['llc_cacheways_used'], instance.llc_cacheways)]
-        
-            resources['llc_cacheways_avail'] = [t - u 
-                            for t, u in 
-                            zip(resources['llc_cacheways_total'], resources['llc_cacheways_used'])]
         
         # Now calculate usage based on instance utilization:
+        # 
         instance_by_uuid = self._update_usage_from_instances(
             context, instances, nodename)
 
@@ -1026,6 +1023,8 @@ class ResourceTracker(object):
             ucpu = 0
         pci_stats = (list(cn.pci_device_pools) if
             cn.pci_device_pools else [])
+        
+        # TODO(Tony): RDT - add CAT support
         LOG.debug("Final resource view: "
                   "name=%(node)s "
                   "phys_ram=%(phys_ram)sMB "
@@ -1034,7 +1033,10 @@ class ResourceTracker(object):
                   "used_disk=%(used_disk)sGB "
                   "total_vcpus=%(total_vcpus)s "
                   "used_vcpus=%(used_vcpus)s "
-                  "pci_stats=%(pci_stats)s",
+                  "pci_stats=%(pci_stats)s "
+                  "llc_cacheways_total=%(llc_cacheways_total)s "
+                  "llc_cacheways_used=%(llc_cacheways_used)s "
+                  "llc_cacheways_avail=%(llc_cacheways_avail)s",
                   {'node': nodename,
                    'phys_ram': cn.memory_mb,
                    'used_ram': cn.memory_mb_used,
@@ -1042,7 +1044,10 @@ class ResourceTracker(object):
                    'used_disk': cn.local_gb_used,
                    'total_vcpus': tcpu,
                    'used_vcpus': ucpu,
-                   'pci_stats': pci_stats})
+                   'pci_stats': pci_stats,
+                   'llc_cacheways_total': cn.llc_cacheways_total,
+                   'llc_cacheways_used': cn.llc_cacheways_used,
+                   'llc_cacheways_avail': cn.llc_cacheways_avail})
 
     def _resource_change(self, compute_node):
         """Check to see if any resources have changed."""
@@ -1051,7 +1056,10 @@ class ResourceTracker(object):
         if not obj_base.obj_equal_prims(
                 compute_node, old_compute, ['updated_at']):
             self.old_resources[nodename] = copy.deepcopy(compute_node)
+            LOG.debug("Tony: Found resource change")
             return True
+        
+        LOG.debug("Tony: No resource change")
         return False
 
     def _sync_compute_service_disabled_trait(self, context, traits):
@@ -1196,6 +1204,8 @@ class ResourceTracker(object):
             # which could have changed and still need to be reported to the
             # scheduler filters/weighers (which could be out of tree as well).
             try:
+                LOG.debug("Tony: save compute node=%s", compute_node)
+                # import remote_pdb; remote_pdb.set_trace()
                 compute_node.save()
             except Exception:
                 # Restore the previous state in self.old_resources so that on
@@ -1478,6 +1488,18 @@ class ResourceTracker(object):
             if instance.vm_state not in vm_states.ALLOW_RESOURCE_REMOVAL:
                 self._update_usage_from_instance(context, instance, nodename)
             instance_by_uuid[instance.uuid] = instance
+        
+        # TODO(Tony): RDT: CAT - calculate available cacheways
+        # TODO(Tony): Check if CAT is supported
+        for instance in instances:
+            cn.llc_cacheways_used = [u + i 
+                        for u, i in 
+                        zip(cn.llc_cacheways_used, instance.llc_cacheways)]
+        
+            cn.llc_cacheways_avail= [t - u 
+                            for t, u in 
+                            zip(cn.llc_cacheways_total, cn.llc_cacheways_used)]
+        
         return instance_by_uuid
 
     def _remove_deleted_instances_allocations(self, context, cn,

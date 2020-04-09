@@ -96,6 +96,10 @@ class ComputeNode(base.NovaPersistentObject, base.NovaObject):
         'ram_allocation_ratio': fields.FloatField(),
         'disk_allocation_ratio': fields.FloatField(),
         'mapped': fields.IntegerField(),
+        # TODO(Tony): RDT - CAT
+        'llc_cacheways_total': fields.ListOfIntegersField(),
+        'llc_cacheways_used': fields.ListOfIntegersField(),
+        'llc_cacheways_avail': fields.ListOfIntegersField(),
         }
 
     def obj_make_compatible(self, primitive, target_version):
@@ -173,11 +177,15 @@ class ComputeNode(base.NovaPersistentObject, base.NovaObject):
 
     @staticmethod
     def _from_db_object(context, compute, db_compute):
+        # TODO(Tony): RDT
         special_cases = set([
             'stats',
             'supported_hv_specs',
             'host',
             'pci_device_pools',
+            'llc_cacheways_total',
+            'llc_cacheways_used',
+            'llc_cacheways_avail'
             ])
         fields = set(compute.fields) - special_cases
         online_updates = {}
@@ -343,7 +351,7 @@ class ComputeNode(base.NovaPersistentObject, base.NovaObject):
         # NOTE(belliott) ignore prune_stats param, no longer relevant
 
         updates = self.obj_get_changes()
-        updates.pop('id', None)
+        updates.pop('id', None)        
         self._convert_stats_to_db_format(updates)
         self._convert_host_ip_to_db_format(updates)
         self._convert_supported_instances_to_db_format(updates)
@@ -365,7 +373,9 @@ class ComputeNode(base.NovaPersistentObject, base.NovaObject):
                 "vcpus_used", "memory_mb_used", "local_gb_used",
                 "numa_topology", "hypervisor_type",
                 "hypervisor_version", "hypervisor_hostname",
-                "disk_available_least", "host_ip", "uuid"]
+                "disk_available_least", "host_ip", "uuid", 
+                "llc_cacheways_total", "llc_cacheways_used", 
+                "llc_cacheways_used"]
         for key in keys:
             if key in resources:
                 # The uuid field is read-only so it should only be set when
