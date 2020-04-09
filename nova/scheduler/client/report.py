@@ -651,6 +651,9 @@ class SchedulerReportClient(object):
             created_rp = None
             
             # get resource providers from placement
+            # return format
+            # list of resource providers: [{resource_provider1},{resource_provider2}]
+            # resource_provider's format see below.
             rps_to_refresh = self.get_providers_in_tree(context, uuid)
             # [ {
             # 'uuid': '4ec3a153-33c2-4553-a47c-e470f711468b', 

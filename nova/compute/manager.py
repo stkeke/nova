@@ -9728,6 +9728,7 @@ class ComputeManager(manager.Manager):
             service is starting, False otherwise.
         """
         LOG.debug("Tony >>> Enter nova.compute.manager.py::ComputeManager{}::update_available_resource()")
+            
         try:
             nodenames = set(self.driver.get_available_nodes())
             LOG.debug("Tony: nodenames=%s", nodenames)
@@ -9740,6 +9741,10 @@ class ComputeManager(manager.Manager):
                                                             nodenames,
                                                             use_slave=True,
                                                             startup=startup)
+
+        LOG.debug("Tony: compute_nodes_in_db=%s", compute_nodes_in_db)
+        for cn in compute_nodes_in_db:
+            LOG.debug("Tony: from db get node=%s", cn)
 
         # Delete orphan compute node not reported by driver but still in db
         for cn in compute_nodes_in_db:

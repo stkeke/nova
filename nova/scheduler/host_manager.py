@@ -636,6 +636,7 @@ class HostManager(object):
                     cctxt, compute_uuids)
 
         timeout = context_module.CELL_TIMEOUT
+        # LOG.debug("Tony: remote_pdb"); import remote_pdb; remote_pdb.set_trace()
         results = context_module.scatter_gather_cells(context, cells, timeout,
                                                       targeted_operation)
         compute_nodes = collections.defaultdict(list)
