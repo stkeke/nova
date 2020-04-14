@@ -294,6 +294,7 @@ class SchedulerReportClient(object):
         version = ROOT_REQUIRED_VERSION
         qparams = resources.to_querystring()
         url = "/allocation_candidates?%s" % qparams
+        LOG.debug("Tony: url=%s", url)
         resp = self.get(url, version=version,
                         global_request_id=context.global_id)
         if resp.status_code == 200:

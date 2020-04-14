@@ -1461,13 +1461,13 @@ class ComputeTaskManager(base.Base):
                                      requested_networks, block_device_mapping,
                                      tags=None):
         # Add all the UUIDs for the instances
-        # TODO (Tony): remote pdb nova.conductor.manager
         # import remote_pdb; remote_pdb.set_trace()
         LOG.debug("Tony >>> Enter nova.condutor.manager::ComputeTaskManager{}::schedule_and_build_instances")
         instance_uuids = [spec.instance_uuid for spec in request_specs]
         try:
             host_lists = self._schedule_instances(context, request_specs[0],
                     instance_uuids, return_alternates=True)
+            LOG.debug("Tony: host_lists=%s", host_lists)
         except Exception as exc:
             LOG.exception('Failed to schedule instances')
             self._bury_in_cell0(context, request_specs[0], exc,

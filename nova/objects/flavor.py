@@ -231,8 +231,8 @@ class Flavor(base.NovaPersistentObject, base.NovaObject,
         """return a list of llc cacheways defined in this flavor"""
         llc_cacheways=[]
         
-        for i in ['0', '1']:
-            cache_key = 'hw:numa_cache.' + i
+        for i in range(int(self.extra_specs['hw:numa_nodes'])):
+            cache_key = 'hw:numa_cache.' + str(i)
             if cache_key in self.extra_specs.keys():
                 cacheways = int(self.extra_specs[cache_key])
                 llc_cacheways.append(cacheways)

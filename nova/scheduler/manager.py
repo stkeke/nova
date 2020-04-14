@@ -144,6 +144,7 @@ class SchedulerManager(manager.Manager):
         is_rebuild = utils.request_is_rebuild(spec_obj)
         alloc_reqs_by_rp_uuid, provider_summaries, allocation_request_version \
             = None, None, None
+        LOG.debug("Tony: self.driver.USES_ALLOCATION_CANDIDATES=%s", str(self.driver.USES_ALLOCATION_CANDIDATES))
         if self.driver.USES_ALLOCATION_CANDIDATES and not is_rebuild:
             # Only process the Placement request spec filters when Placement
             # is used.
@@ -155,8 +156,10 @@ class SchedulerManager(manager.Manager):
             resources = utils.resources_from_request_spec(
                 ctxt, spec_obj, self.driver.host_manager,
                 enable_pinning_translate=True)
+            LOG.debug("Tony: resources=%s resources.cpu_pinning_requested=%s", resources, resources.cpu_pinning_requested)
             res = self.placement_client.get_allocation_candidates(ctxt,
                                                                   resources)
+            LOG.debug("Tony: res=%s", res)
             if res is None:
                 # We have to handle the case that we failed to connect to the
                 # Placement service and the safe_connect decorator on
@@ -185,6 +188,7 @@ class SchedulerManager(manager.Manager):
                     enable_pinning_translate=False)
                 res = self.placement_client.get_allocation_candidates(
                     ctxt, resources)
+                LOG.debug("Tony: res again=%s", res)
                 if res:
                     # merge the allocation requests and provider summaries from
                     # the two requests together
@@ -208,6 +212,7 @@ class SchedulerManager(manager.Manager):
                     for rp_uuid in ar['allocations']:
                         alloc_reqs_by_rp_uuid[rp_uuid].append(ar)
 
+                LOG.debug("Tony: alloc_reqs_by_rp_uuid=%s", alloc_reqs_by_rp_uuid)
         # Only return alternates if both return_objects and return_alternates
         # are True.
         return_alternates = return_alternates and return_objects
@@ -221,6 +226,7 @@ class SchedulerManager(manager.Manager):
         if not return_objects:
             selection_dicts = [sel[0].to_dict() for sel in selections]
             return jsonutils.to_primitive(selection_dicts)
+        LOG.debug("Tony: selections=%s", selections)
         LOG.debug("Tony <<< Leave nova.scheduler.manager.py::SchedulerManager{}::selection_destinations()")
         return selections
 

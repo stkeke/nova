@@ -157,6 +157,7 @@ class SchedulerAPI(object):
         cctxt = self.client.prepare(
             version=version, call_monitor_timeout=CONF.rpc_response_timeout,
             timeout=CONF.long_rpc_timeout)
+        # import remote_pdb; remote_pdb.set_trace()
         return cctxt.call(ctxt, 'select_destinations', **msg_args)
 
     def update_aggregates(self, ctxt, aggregates):

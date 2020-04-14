@@ -97,9 +97,9 @@ class ComputeNode(base.NovaPersistentObject, base.NovaObject):
         'disk_allocation_ratio': fields.FloatField(),
         'mapped': fields.IntegerField(),
         # TODO(Tony): RDT - CAT
-        'llc_cacheways_total': fields.ListOfIntegersField(),
-        'llc_cacheways_used': fields.ListOfIntegersField(),
-        'llc_cacheways_avail': fields.ListOfIntegersField(),
+        # 'llc_cacheways_total': fields.ListOfIntegersField(),
+        # 'llc_cacheways_used': fields.ListOfIntegersField(),
+        # 'llc_cacheways_avail': fields.ListOfIntegersField(),
         }
 
     def obj_make_compatible(self, primitive, target_version):
@@ -183,9 +183,9 @@ class ComputeNode(base.NovaPersistentObject, base.NovaObject):
             'supported_hv_specs',
             'host',
             'pci_device_pools',
-            'llc_cacheways_total',
-            'llc_cacheways_used',
-            'llc_cacheways_avail'
+            # 'llc_cacheways_total',
+            # 'llc_cacheways_used',
+            # 'llc_cacheways_avail'
             ])
         fields = set(compute.fields) - special_cases
         online_updates = {}

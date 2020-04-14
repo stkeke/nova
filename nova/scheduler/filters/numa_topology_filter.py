@@ -67,14 +67,14 @@ class NUMATopologyFilter(filters.BaseHostFilter):
         # TODO(Tony): NUMATopologyFilter - Add RDT support
         # TODO(Tony): This is actually checking flavor validity
         # RDT requires 'dedicated' CPU policy
-        cat_cache = [extra_specs.get('hw:numa_cache.0'), 
-                     extra_specs.get('hw:numa_cache.1'), 
-                     extra_specs.get('hw:numa_cache')]
-        if any(cat_cache) and fields.CPUAllocationPolicy.DEDICATED not in cpu_policy:
-            LOG.debug("Tony Filter Failure: RDT requires 'dedicated' cpu_policy")
-            return False
-        else:
-            LOG.debug("Tony Filter PASS: Verified RDT and 'dedicated' cpu_policy")
+        # cat_cache = [extra_specs.get('hw:numa_cache.0'), 
+        #              extra_specs.get('hw:numa_cache.1'), 
+        #              extra_specs.get('hw:numa_cache')]
+        # if any(cat_cache) and fields.CPUAllocationPolicy.DEDICATED not in cpu_policy:
+        #     LOG.debug("Tony Filter Failure: RDT requires 'dedicated' cpu_policy")
+        #     return False
+        # else:
+        #     LOG.debug("Tony Filter PASS: Verified RDT and 'dedicated' cpu_policy")
 
         return True
 
@@ -94,7 +94,6 @@ class NUMATopologyFilter(filters.BaseHostFilter):
                 {'host_state': host_state})
         
         # host_state: <class 'nova.scheduler.host_manager.HostState'>
-        # TODO(Tony): remote pdb
         # import remote_pdb; remote_pdb.set_trace()
         ram_ratio = host_state.ram_allocation_ratio
         cpu_ratio = host_state.cpu_allocation_ratio

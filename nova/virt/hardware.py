@@ -2194,7 +2194,6 @@ def numa_usage_from_instance_numa(host_topology, instance_topology,
             shared_cpus = host_cell.cpuset
             dedicated_cpus = host_cell.pcpuset
 
-        # TODO(Tony): RDT debug
         # import remote_pdb; remote_pdb.set_trace()
         new_cell = objects.NUMACell(
             id=host_cell.id,

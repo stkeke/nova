@@ -1033,10 +1033,10 @@ class ResourceTracker(object):
                   "used_disk=%(used_disk)sGB "
                   "total_vcpus=%(total_vcpus)s "
                   "used_vcpus=%(used_vcpus)s "
-                  "pci_stats=%(pci_stats)s "
-                  "llc_cacheways_total=%(llc_cacheways_total)s "
-                  "llc_cacheways_used=%(llc_cacheways_used)s "
-                  "llc_cacheways_avail=%(llc_cacheways_avail)s",
+                  "pci_stats=%(pci_stats)s ",
+                #   "llc_cacheways_total=%(llc_cacheways_total)s "
+                #   "llc_cacheways_used=%(llc_cacheways_used)s "
+                #   "llc_cacheways_avail=%(llc_cacheways_avail)s",
                   {'node': nodename,
                    'phys_ram': cn.memory_mb,
                    'used_ram': cn.memory_mb_used,
@@ -1045,9 +1045,10 @@ class ResourceTracker(object):
                    'total_vcpus': tcpu,
                    'used_vcpus': ucpu,
                    'pci_stats': pci_stats,
-                   'llc_cacheways_total': cn.llc_cacheways_total,
-                   'llc_cacheways_used': cn.llc_cacheways_used,
-                   'llc_cacheways_avail': cn.llc_cacheways_avail})
+                #    'llc_cacheways_total': cn.llc_cacheways_total,
+                #    'llc_cacheways_used': cn.llc_cacheways_used,
+                #    'llc_cacheways_avail': cn.llc_cacheways_avail
+                   })
 
     def _resource_change(self, compute_node):
         """Check to see if any resources have changed."""
@@ -1491,14 +1492,15 @@ class ResourceTracker(object):
         
         # TODO(Tony): RDT: CAT - calculate available cacheways
         # TODO(Tony): Check if CAT is supported
-        for instance in instances:
-            cn.llc_cacheways_used = [u + i 
-                        for u, i in 
-                        zip(cn.llc_cacheways_used, instance.llc_cacheways)]
+
+        # for instance in instances:
+        #     cn.llc_cacheways_used = [u + i 
+        #                 for u, i in 
+        #                 zip(cn.llc_cacheways_used, instance.llc_cacheways)]
         
-            cn.llc_cacheways_avail= [t - u 
-                            for t, u in 
-                            zip(cn.llc_cacheways_total, cn.llc_cacheways_used)]
+        #     cn.llc_cacheways_avail= [t - u 
+        #                     for t, u in 
+        #                     zip(cn.llc_cacheways_total, cn.llc_cacheways_used)]
         
         return instance_by_uuid
 

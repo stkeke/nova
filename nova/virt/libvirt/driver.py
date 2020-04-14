@@ -2893,7 +2893,6 @@ class LibvirtDriver(driver.ComputeDriver):
 
         qemu_img_extra_arg.append(active_disk_object.source_path)
         # execute operation with disk concurrency semaphore
-        # TODO(Tony): remote_pdb
         # import remote_pdb; remote_pdb.set_trace()
         with compute_utils.disk_ops_semaphore:
             processutils.execute("qemu-img", "rebase", "-b", backing_file,
@@ -5092,9 +5091,9 @@ class LibvirtDriver(driver.ComputeDriver):
         LOG.debug('Tony host capability xml: %(cap)s', 
                 { 'cap': self._host.get_capabilities().to_xml()})
         
-        for i in ['0', '1']:
-            cache_key = 'hw:numa_cache.' + i
-            cpus_key = 'hw:numa_cpus.' + i
+        for i in range(int(flavor.extra_specs['hw:numa_nodes'])):
+            cache_key = 'hw:numa_cache.' + str(i)
+            cpus_key = 'hw:numa_cpus.' + str(i)
             if cache_key in flavor.extra_specs.keys():
                 cacheways = int(flavor.extra_specs[cache_key])
                 cat_cache = vconfig.LibvirtConfigGuestCPUTuneCacheTuneCache()
@@ -5867,7 +5866,6 @@ class LibvirtDriver(driver.ComputeDriver):
         disk_mapping = disk_info['mapping']
         vpmems = self._get_ordered_vpmems(instance, flavor)
 
-        # TODO(Tony): remote pdb
         # import remote_pdb; remote_pdb.set_trace()
         virt_type = CONF.libvirt.virt_type
         guest = vconfig.LibvirtConfigGuest()
@@ -6410,7 +6408,6 @@ class LibvirtDriver(driver.ComputeDriver):
         """
         LOG.debug("Tony >>> Enter nova.virt.libvirt.driver.py::LibvirtDriver{}::_create_domain()")
         if xml:
-            # TODO(Tony): remote_pdb
             # import remote_pdb; remote_pdb.set_trace()
             guest = libvirt_guest.Guest.create(xml, self._host)
             if post_xml_callback is not None:
@@ -6457,7 +6454,6 @@ class LibvirtDriver(driver.ComputeDriver):
                                    post_xml_callback=None,
                                    destroy_disks_on_failure=False,
                                    external_events=None):
-        # TODO(Tony): remote pdb
         # import remote_pdb; remote_pdb.set_trace()
         """Do required network setup and create domain."""
         timeout = CONF.vif_plugging_timeout

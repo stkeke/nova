@@ -693,7 +693,6 @@ class ServersController(wsgi.Controller):
             # None
             availability_zone, host, node = parse_az(context,
                                                      availability_zone)
-            # TODO (Tony): remote pdb in create()
             # import remote_pdb; remote_pdb.set_trace()
         except exception.InvalidInput as err:
             raise exc.HTTPBadRequest(explanation=six.text_type(err))
