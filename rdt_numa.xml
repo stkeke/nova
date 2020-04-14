@@ -1,0 +1,103 @@
+<domain type="kvm">
+<uuid>499f4bea-2e52-49ce-bb27-2f35b77544b4</uuid>
+<name>instance-00000010</name>
+<memory>131072</memory>
+<numatune>
+<memory mode="strict" nodeset="0-1"/>
+<memnode cellid="0" mode="strict" nodeset="0"/>
+<memnode cellid="1" mode="strict" nodeset="1"/>
+</numatune>
+<vcpu>10</vcpu>
+<metadata>
+<nova:instance xmlns:nova="http://openstack.org/xmlns/libvirt/nova/1.0">
+<nova:package version="20.1.0"/>
+<nova:name>rdt_inst1</nova:name>
+<nova:creationTime>2020-02-05 10:02:52</nova:creationTime>
+<nova:flavor name="rdt.numa">
+<nova:memory>128</nova:memory>
+<nova:disk>0</nova:disk>
+<nova:swap>0</nova:swap>
+<nova:ephemeral>0</nova:ephemeral>
+<nova:vcpus>10</nova:vcpus>
+</nova:flavor>
+<nova:owner>
+<nova:user uuid="7c69d43ae605456996a3a8c1dff1b253">admin</nova:user>
+<nova:project uuid="375dee95310e437e9972e26fa6cedba4">demo</nova:project>
+</nova:owner>
+<nova:root type="image" uuid="cb3794b6-16c0-40a3-a27e-c00c4366ac11"/>
+</nova:instance>
+</metadata>
+<sysinfo type="smbios">
+<system>
+<entry name="manufacturer">OpenStack Foundation</entry>
+<entry name="product">OpenStack Nova</entry>
+<entry name="version">20.1.0</entry>
+<entry name="serial">499f4bea-2e52-49ce-bb27-2f35b77544b4</entry>
+<entry name="uuid">499f4bea-2e52-49ce-bb27-2f35b77544b4</entry>
+<entry name="family">Virtual Machine</entry>
+</system>
+</sysinfo>
+<os>
+<type machine="pc">hvm</type>
+<boot dev="hd"/>
+<smbios mode="sysinfo"/>
+</os>
+<features>
+<acpi/>
+<apic/>
+</features>
+<cputune>
+<shares>10240</shares>
+<emulatorpin cpuset="7,9,18,23,25,43,45,54,59,61"/>
+<vcpupin vcpu="0" cpuset="43"/>
+<vcpupin vcpu="1" cpuset="7"/>
+<vcpupin vcpu="2" cpuset="9"/>
+<vcpupin vcpu="3" cpuset="45"/>
+<vcpupin vcpu="4" cpuset="59"/>
+<vcpupin vcpu="5" cpuset="23"/>
+<vcpupin vcpu="6" cpuset="25"/>
+<vcpupin vcpu="7" cpuset="61"/>
+<vcpupin vcpu="8" cpuset="18"/>
+<vcpupin vcpu="9" cpuset="54"/>
+</cputune>
+<clock offset="utc">
+<timer name="pit" tickpolicy="delay"/>
+<timer name="rtc" tickpolicy="catchup"/>
+<timer name="hpet" present="no"/>
+</clock>
+<cpu mode="host-passthrough" match="exact">
+<topology sockets="2" cores="5" threads="1"/>
+<numa>
+<cell id="0" cpus="0-3" memory="65536"/>
+<cell id="1" cpus="4-9" memory="65536"/>
+</numa>
+</cpu>
+<devices>
+<disk type="file" device="disk">
+<driver name="qemu" type="qcow2" cache="none"/>
+<source file="/opt/stack/data/nova/instances/499f4bea-2e52-49ce-bb27-2f35b77544b4/disk"/>
+<target dev="vda" bus="virtio"/>
+</disk>
+<interface type="bridge">
+<mac address="fa:16:3e:41:3f:84"/>
+<model type="virtio"/>
+<source bridge="br-int"/>
+<mtu size="1500"/>
+<target dev="tap6d3ecceb-44"/>
+<virtualport type="openvswitch">
+<parameters interfaceid="6d3ecceb-442d-43db-9853-b9550e1d605f"/>
+</virtualport>
+</interface>
+<serial type="pty">
+<log file="/opt/stack/data/nova/instances/499f4bea-2e52-49ce-bb27-2f35b77544b4/console.log" append="off"/>
+</serial>
+<graphics type="vnc" autoport="yes" listen="0.0.0.0"/>
+<video>
+<model type="cirrus"/>
+</video>
+<memballoon model="virtio">
+<stats period="10"/>
+</memballoon>
+</devices>
+</domain>
+

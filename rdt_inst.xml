@@ -32,9 +32,11 @@
     -->
     <cachetune vcpus="0-3">
       <cache id="0" level="3" type="both" size="4608" unit="KiB"/>
+      <monitor level='3' vcpus='0-3'/>
     </cachetune>
     <cachetune vcpus="4-9">
       <cache id="1" level="3" type="both" size="9216" unit="KiB"/>
+      <monitor level='3' vcpus='4-9'/>
     </cachetune>
   </cputune>
 
