@@ -5091,19 +5091,20 @@ class LibvirtDriver(driver.ComputeDriver):
         LOG.debug('Tony host capability xml: %(cap)s', 
                 { 'cap': self._host.get_capabilities().to_xml()})
         
-        for i in range(int(flavor.extra_specs['hw:numa_nodes'])):
-            cache_key = 'hw:numa_cache.' + str(i)
-            cpus_key = 'hw:numa_cpus.' + str(i)
-            if cache_key in flavor.extra_specs.keys():
-                cacheways = int(flavor.extra_specs[cache_key])
-                cat_cache = vconfig.LibvirtConfigGuestCPUTuneCacheTuneCache()
-                cat_cache.id = i
-                cat_cache.size = cacheways * cacheway_size
+        if 'hw:numa_nodes' in flavor.extra_specs:
+            for i in range(int(flavor.extra_specs['hw:numa_nodes'])):
+                cache_key = 'hw:numa_cache.' + str(i)
+                cpus_key = 'hw:numa_cpus.' + str(i)
+                if cache_key in flavor.extra_specs.keys():
+                    cacheways = int(flavor.extra_specs[cache_key])
+                    cat_cache = vconfig.LibvirtConfigGuestCPUTuneCacheTuneCache()
+                    cat_cache.id = i
+                    cat_cache.size = cacheways * cacheway_size
 
-                cachetune = vconfig.LibvirtConfigGuestCPUTuneCacheTune()
-                cachetune.vcpus = flavor.extra_specs[cpus_key]
-                cachetune.cache = cat_cache
-                guest_cpu_tune.cachetune.append(cachetune)
+                    cachetune = vconfig.LibvirtConfigGuestCPUTuneCacheTune()
+                    cachetune.vcpus = flavor.extra_specs[cpus_key]
+                    cachetune.cache = cat_cache
+                    guest_cpu_tune.cachetune.append(cachetune)
 
         # TODO(berrange) When the guest has >1 NUMA node, it will
         # span multiple host NUMA nodes. By pinning emulator threads
@@ -7421,6 +7422,7 @@ class LibvirtDriver(driver.ComputeDriver):
                 tunneled=tunnel_affinities[cell.id])
 
             # TODO(Tony): RDT - CAT support
+            LOG.debug("Tony: cell.id=%d", cell.id)
             llc_cacheways_total=int(CONF.libvirt.reserved_cacheways[cell.id])
             LOG.debug("Tony: llc_cacheways_total[%d]=%d", cell.id, llc_cacheways_total)
             
